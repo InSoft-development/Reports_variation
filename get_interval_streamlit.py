@@ -107,8 +107,8 @@ def rebuilt_anomaly_interval_streamlit(csv_predict_path, csv_rolled_path, csv_da
                 rolled_df = pd.merge(time_df, rolled_df, how='left', on='timestamp')
                 rolled_df.fillna(method='ffill', inplace=True)
                 rolled_df.fillna(value={"target_value": 0}, inplace=True)
-                rolled_df.to_csv(csv_rolled_name, index=False)
-
+                #rolled_df.to_csv(csv_rolled_name, index=False)
+            rolled_df.to_csv(csv_rolled_name, index=False)
             rolled_df.index = rolled_df['timestamp']
             rolled_df = rolled_df.drop(columns=['timestamp'])
 
