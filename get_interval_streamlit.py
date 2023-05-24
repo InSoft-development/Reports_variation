@@ -58,7 +58,18 @@ def get_anomaly_interval_streamlit(loss, threshold_short, threshold_long,
     return interval_list, idx_list
 
 
-def rebuilt_anomaly_interval_streamlit(csv_predict_path, json_dir, csv_loss_path, SHORT_THRESHOLD,
+# def rolling_probability(df, roll_in_hours, number_of_samples):
+#     # Первые индексы после сглаживания будут Nan, запоминаем их
+#     temp_rows = df['target_value'].iloc[:roll_in_hours*number_of_samples]
+#     rolling_prob = df['target_value'].rolling(window=roll_in_hours*number_of_samples, min_periods=1, axis='rows').mean()
+#     rolling_prob.iloc[:roll_in_hours*number_of_samples] = temp_rows
+#     df['target_value'] = rolling_prob
+#     return df
+
+
+def rebuilt_anomaly_interval_streamlit(csv_predict_path, csv_rolled_path, json_dir, csv_loss_path,
+                                       roll_probability, number_of_samples,
+                                       SHORT_THRESHOLD,
                                        LEN_SHORT_ANOMALY,
                                        COUNT_CONTINUE_SHORT,
                                        LONG_THRESHOLD,
@@ -66,16 +77,26 @@ def rebuilt_anomaly_interval_streamlit(csv_predict_path, json_dir, csv_loss_path
                                        COUNT_CONTINUE_LONG,
                                        COUNT_TOP=3):
     # получение данных csv группы по вероятности аномалии
-    for i, (csv, loss) in enumerate(zip(sorted(os.listdir(f'{csv_predict_path}')),
-                                      sorted(os.listdir(f'{csv_loss_path}')))):
+    for i, (csv, loss, rolled) in enumerate(zip(
+                                            sorted(os.listdir(f'{csv_predict_path}')),
+                                            sorted(os.listdir(f'{csv_loss_path}')),
+                                            sorted(os.listdir(f'{csv_rolled_path}'))
+                                            )):
         csv_predict_name = f'{csv_predict_path}{os.sep}{csv}'
         csv_loss_name = f'{csv_loss_path}{os.sep}{loss}'
+        csv_rolled_name = f'{csv_rolled_path}{os.sep}{rolled}'
         dict_list = []
         try:
             logger.info(f'Read_file: {csv_predict_name}')
             anomaly_time_df = pd.read_csv(csv_predict_name)
-            anomaly_time_df.index = anomaly_time_df['timestamp']
-            anomaly_time_df = anomaly_time_df.drop(columns=['timestamp'])
+            rolled_df = pd.read_csv(csv_rolled_name)
+
+            # Сглаживание и сохранение результата
+            # rolled_df = rolling_probability(anomaly_time_df, roll_probability, number_of_samples)
+            # rolled_df.to_csv(csv_rolled_name, index=False)
+
+            # rolled_df.index = anomaly_time_df['timestamp']
+            # rolled_df = anomaly_time_df.drop(columns=['timestamp'])
 
             loss_df = pd.read_csv(csv_loss_name)
             loss_df.index = loss_df['timestamp']
@@ -83,7 +104,7 @@ def rebuilt_anomaly_interval_streamlit(csv_predict_path, json_dir, csv_loss_path
 
             short_treshold = SHORT_THRESHOLD
             long_treshold = LONG_THRESHOLD
-            interval_list, idx_list = get_anomaly_interval_streamlit(anomaly_time_df['target_value'],
+            interval_list, idx_list = get_anomaly_interval_streamlit(rolled_df['target_value'],
                                                                      threshold_short=short_treshold,
                                                                      threshold_long=long_treshold,
                                                                      len_long=LEN_LONG_ANOMALY,
@@ -92,9 +113,8 @@ def rebuilt_anomaly_interval_streamlit(csv_predict_path, json_dir, csv_loss_path
                                                                      count_continue_long=COUNT_CONTINUE_LONG)
             for j in idx_list:
                 top_list = loss_df[j[0]:j[1]].mean().sort_values(ascending=False).index[:COUNT_TOP].to_list()
-                    #loss_df[j[0]:j[1]].drop(columns='timestamp').mean().sort_values(ascending=False).index[:COUNT_TOP].to_list()
                 report_dict = {
-                    "time": (str(anomaly_time_df.index[j[0]]), str(anomaly_time_df.index[j[1]])),
+                    "time": (str(rolled_df.index[j[0]]), str(rolled_df.index[j[1]])),
                     "len": j[1] - j[0],
                     "index": j,
                     "top_sensors": top_list

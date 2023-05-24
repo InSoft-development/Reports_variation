@@ -80,6 +80,15 @@ def load_kks():
     return kks_dict
 
 
+def rolling_probability(df, roll_in_hours, number_of_samples):
+    # Первые индексы после сглаживания будут Nan, запоминаем их
+    temp_rows = df['target_value'].iloc[:roll_in_hours*number_of_samples]
+    rolling_prob = df['target_value'].rolling(window=roll_in_hours*number_of_samples, min_periods=1, axis='rows').mean()
+    rolling_prob.iloc[:roll_in_hours*number_of_samples] = temp_rows
+    df['target_value'] = rolling_prob
+    return df
+
+
 # выбранный период
 if "selection_interval" not in st.session_state:
     st.session_state.selection_interval = 0
@@ -124,6 +133,9 @@ if ("LEFT_SPACE" not in st.session_state) or ("RIGHT_SPACE" not in st.session_st
     st.session_state.LEFT_SPACE = 1000
     st.session_state.RIGHT_SPACE = 1000
 
+if "roll" not in st.session_state:
+    st.session_state.roll = 4
+
 parser = argparse.ArgumentParser()
 parser.add_argument('--station', type=str, default='')
 opt = parser.parse_args()
@@ -141,6 +153,7 @@ JSON_DIR = f'{METHODS_DIR}json_interval/'
 
 CSV_DATA = f'{DATA_DIR}/csv_data/'
 CSV_PREDICT = f'{METHODS_DIR}csv_predict/'
+CSV_ROLLED = f'{METHODS_DIR}csv_rolled/'
 CSV_LOSS = f'{METHODS_DIR}csv_loss/'
 # CSV_PREDICT_DIR = f'{DATA_DIR}/csv_predict/'
 # CSV_PREDICT = f'{CSV_PREDICT_DIR}{st.session_state.checked_method}'
@@ -181,19 +194,37 @@ except Exception as e:
     logger.info(f'{CSV_DATA} dir exist!')
 
 for method in METHODS:
+    csv_predict = f'{DATA_DIR}{method}{os.sep}csv_predict{os.sep}'
+    csv_loss = f'{DATA_DIR}{method}{os.sep}csv_loss{os.sep}'
+    csv_rolled = f'{DATA_DIR}{method}{os.sep}csv_rolled{os.sep}'
+    json_dir = f'{DATA_DIR}{method}{os.sep}json_interval{os.sep}'
+
     try:
-        csv_predict = f'{DATA_DIR}{method}{os.sep}csv_predict{os.sep}'
-        csv_loss = f'{DATA_DIR}{method}{os.sep}csv_loss{os.sep}'
-        json_dir = f'{DATA_DIR}{method}{os.sep}json_interval{os.sep}'
-
         os.mkdir(f'{DATA_DIR}{method}')
-        os.mkdir(csv_predict)
-        os.mkdir(csv_loss)
-        os.mkdir(json_dir)
-
     except Exception as e:
         print(e)
         logger.info(f'{DATA_DIR}{method} dir exist!')
+    try:
+        os.mkdir(csv_predict)
+    except Exception as e:
+        print(e)
+        logger.info(f'{DATA_DIR}{method} dir exist!')
+    try:
+        os.mkdir(csv_rolled)
+    except Exception as e:
+        print(e)
+        logger.info(f'{DATA_DIR}{method} dir exist!')
+    try:
+        os.mkdir(csv_loss)
+    except Exception as e:
+        print(e)
+        logger.info(f'{DATA_DIR}{method} dir exist!')
+    try:
+        os.mkdir(json_dir)
+    except Exception as e:
+        print(e)
+        logger.info(f'{DATA_DIR}{method} dir exist!')
+
 
 # try:
 #     os.mkdir(f'{JSON_INTERVAL_DIR}')
@@ -253,6 +284,7 @@ except FileNotFoundError as e:
 PLOT_FEATURES = config_plot_json['PLOT_FEATURES']
 DROP_LIST = config_plot_json['DROP_LIST']
 DICT_KKS = f'{DATA_DIR}{config["paths"]["files"]["original_kks"]}'
+NUMBER_OF_SAMPLES = config["number_of_samples"]
 
 index_group = [list(x.keys())[0] for x in json_dict["groups"]]
 if index_group[0] == '0':
@@ -284,6 +316,7 @@ if not st.session_state.flag_group:
 
 CSV_DATA_NAME = f'{CSV_DATA}/slices.csv'
 CSV_PREDICT_NAME = f'{CSV_PREDICT}/predict_{st.session_state.selected_group}.csv'
+CSV_ROLLED_NAME = f'{CSV_ROLLED}/rolled_{st.session_state.selected_group}.csv'
 CSV_LOSS_NAME = f'{CSV_LOSS}/loss_{st.session_state.selected_group}.csv'
 
 added_intervals = f'{JSON_DIR}/added_intervals_{st.session_state.selected_group}.json'
@@ -293,14 +326,59 @@ top_list = []
 interval_added_list = []
 top_added_list = []
 
+# получение исходных данных csv
+try:
+    logger.info(f'Read_file: {CSV_DATA_NAME}')
+    data_df = pd.read_csv(f'{CSV_DATA_NAME}')
+    time_df = pd.DataFrame()
+    time_df['timestamp'] = data_df['timestamp']
+    time_df.index = time_df['timestamp']
+    data_df.index = data_df['timestamp']
+    data_df = data_df.drop(columns=['timestamp'])
+    # data_df.fillna(data_df.mean(), inplace=True)
+except Exception as e:
+    print(e)
+    logger.error(e)
+
 # получение данных csv группы по вероятности аномалии
 try:
-    logger.info(f'Read_file: {CSV_PREDICT_NAME}.csv')
+    logger.info(f'Read_file: {CSV_PREDICT_NAME}')
     anomaly_time_df = pd.read_csv(f'{CSV_PREDICT_NAME}')
-    anomaly_time_df.fillna(method='ffill', inplace=True)
-    anomaly_time_df.fillna(value={"target_value": 0}, inplace=True)
+    # # merge фрейма вероятности с slice csv по timestamp
+    # if len(anomaly_time_df) != len(data_df):
+    #     logger.info("merge anomaly_time_df with data_df by timestamp")
+    #     time_df = pd.merge(time_df, anomaly_time_df, how='left', on='timestamp')
+    #     anomaly_time_df = time_df
+    #     anomaly_time_df.fillna(method='ffill', inplace=True)
+    #     anomaly_time_df.fillna(value={"target_value": 0}, inplace=True)
+    #     anomaly_time_df.to_csv(f'{CSV_PREDICT_NAME}', index=False)
     anomaly_time_df.index = anomaly_time_df['timestamp']
     anomaly_time_df = anomaly_time_df.drop(columns=['timestamp'])
+except Exception as e:
+    print(e)
+    logger.error(e)
+
+# получение данных csv группы сглаженной вероятности
+try:
+    logger.info(f'Read_file: {CSV_ROLLED_NAME}')
+    #rolled_df = pd.read_csv(f'{CSV_ROLLED_NAME}')
+    # Сглаживание
+    rolled_df = rolling_probability(anomaly_time_df, st.session_state.roll, NUMBER_OF_SAMPLES)
+
+    # merge фрейма вероятности с slice csv по timestamp
+    if len(rolled_df) != len(data_df):
+        logger.info("merge rolled_df with data_df by timestamp")
+        rolled_df = pd.merge(time_df, rolled_df, how='left', left_index=True, right_index=True)
+        # time_df = pd.merge(time_df, rolled_df, how='left', on='timestamp')
+        # rolled_df = time_df
+        rolled_df.fillna(method='ffill', inplace=True)
+        rolled_df.fillna(value={"target_value": 0}, inplace=True)
+        rolled_df.to_csv(f'{CSV_ROLLED_NAME}', index=False)
+        rolled_df = rolled_df.drop(columns=['timestamp'])
+    rolled_df.fillna(method='ffill', inplace=True)
+    rolled_df.fillna(value={"target_value": 0}, inplace=True)
+    #rolled_df.index = rolled_df['timestamp']
+    #rolled_df = rolled_df.drop(columns=['timestamp'])
 except Exception as e:
     print(e)
     logger.error(e)
@@ -311,17 +389,6 @@ try:
     loss_df = pd.read_csv(f'{CSV_LOSS_NAME}')
     loss_df.index = loss_df['timestamp']
     loss_df = loss_df.drop(columns=['timestamp'])
-except Exception as e:
-    print(e)
-    logger.error(e)
-
-# получение исходных данных csv
-try:
-    logger.info(f'Read_file: {CSV_DATA_NAME}')
-    data_df = pd.read_csv(f'{CSV_DATA_NAME}')
-    data_df.index = data_df['timestamp']
-    data_df = data_df.drop(columns=['timestamp'])
-    # data_df.fillna(data_df.mean(), inplace=True)
 except Exception as e:
     print(e)
     logger.error(e)
@@ -458,6 +525,11 @@ if selected_menu == "Интервалы":
         if selected_interval_sidebar == "Главная":
             with st.form("interval detection"):
                 st.write("Выделение интервалов")
+
+                roll_probability = st.number_input(label="Сглаживание в часах", min_value=1,
+                                                   value=config["model"]["rolling"], key="roll_probability")
+                st.session_state.roll = roll_probability
+
                 short_col, long_col = st.columns(2)
                 with short_col:
                     short_threshold = st.number_input(label="SHORT_THRESHOLD", min_value=1, max_value=100, value=96,
@@ -476,7 +548,10 @@ if selected_menu == "Интервалы":
                 submitted_interval_detection = st.form_submit_button("Запустить выделение интервалов")
                 if submitted_interval_detection:
                     st.write("Выделение интервалов")
-                    get_interval_streamlit.rebuilt_anomaly_interval_streamlit(CSV_PREDICT, JSON_DIR, CSV_LOSS,
+                    get_interval_streamlit.rebuilt_anomaly_interval_streamlit(CSV_PREDICT, CSV_ROLLED,
+                                                                              JSON_DIR, CSV_LOSS,
+                                                                              roll_probability,
+                                                                              NUMBER_OF_SAMPLES,
                                                                               short_threshold,
                                                                               len_short_anomaly,
                                                                               count_continue_short,
@@ -507,7 +582,7 @@ if selected_menu == "Интервалы":
     if idx == 0:
         st.markdown(f'<h5 style="text-align: left; color: #4562a1;">{home_line_text}</h5>',
                     unsafe_allow_html=True)
-        df_common = anomaly_time_df
+        df_common = rolled_df
         # if st.session_state.checked_method == "LSTM":
         #     col_list = ['loss']
         # else:
@@ -586,6 +661,7 @@ if selected_menu == "Интервалы":
                             interval_begin_index = datetime_down_time_index
                             interval_end_index = datetime_up_time_index
                             top_T = mean_index(loss_df[interval_begin_index:interval_end_index], group_sensors)
+                            logger.error(loss_df[interval_begin_index:interval_end_index])
                             dictionary = {
                                 "time": [str(datetime.datetime.strftime(datetime_down_time,
                                                                         "%Y-%m-%d %H:%M:%S")),
@@ -849,7 +925,7 @@ if selected_menu == "Интервалы":
                         unsafe_allow_html=True)
         st.markdown(f'<h6 style="text-align: left; color: #4562a1;">{tab_line_text}</h6>',
                     unsafe_allow_html=True)
-        df_common = anomaly_time_df
+        df_common = rolled_df
         # if st.session_state.checked_method == "LSTM":
         #     col_list = ['loss']
         # if st.session_state.checked_method == "Potentials":
@@ -941,7 +1017,7 @@ if selected_menu == "Интервалы":
     if report_sidebar_button:
         with st.sidebar:
             progress_bar = st.progress(0)
-        get_pdf_report_streamlit.get_common_from_sidebar_report(anomaly_time_df, data_df, group_intervals,
+        get_pdf_report_streamlit.get_common_from_sidebar_report(rolled_df, data_df, group_intervals,
                                                                 added_intervals, interval_list, progress_bar,
                                                                 web_app_group, web_app_period_reports,
                                                                 LEFT_SPACE, RIGHT_SPACE,
@@ -977,7 +1053,7 @@ if selected_menu == "Дополнения":
     st.markdown("<h5 style='text-align: left; color: #4562a1;'>"
                 "Гистограмма распределения ошибки восстановления значений датчиков</h5>",
                 unsafe_allow_html=True)
-    fig_hist = get_view_streamlit.hist_plot(anomaly_time_df, config)
+    fig_hist = get_view_streamlit.hist_plot(rolled_df, config)
 
 flag_radio = False
 
