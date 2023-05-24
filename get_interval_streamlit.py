@@ -58,16 +58,17 @@ def get_anomaly_interval_streamlit(loss, threshold_short, threshold_long,
     return interval_list, idx_list
 
 
-# def rolling_probability(df, roll_in_hours, number_of_samples):
-#     # Первые индексы после сглаживания будут Nan, запоминаем их
-#     temp_rows = df['target_value'].iloc[:roll_in_hours*number_of_samples]
-#     rolling_prob = df['target_value'].rolling(window=roll_in_hours*number_of_samples, min_periods=1, axis='rows').mean()
-#     rolling_prob.iloc[:roll_in_hours*number_of_samples] = temp_rows
-#     df['target_value'] = rolling_prob
-#     return df
+def rolling_probability(df, roll_in_hours, number_of_samples):
+    # Первые индексы после сглаживания будут Nan, запоминаем их
+    temp_rows = df['target_value'].iloc[:roll_in_hours*number_of_samples]
+    rolling_prob = df['target_value'].rolling(window=roll_in_hours*number_of_samples, min_periods=1, axis='rows').mean()
+    rolling_prob.iloc[:roll_in_hours*number_of_samples] = temp_rows
+    df['target_value'] = rolling_prob
+    return df
 
 
-def rebuilt_anomaly_interval_streamlit(csv_predict_path, csv_rolled_path, json_dir, csv_loss_path,
+def rebuilt_anomaly_interval_streamlit(csv_predict_path, csv_rolled_path, csv_data_path,
+                                       json_dir, csv_loss_path,
                                        roll_probability, number_of_samples,
                                        SHORT_THRESHOLD,
                                        LEN_SHORT_ANOMALY,
@@ -85,11 +86,31 @@ def rebuilt_anomaly_interval_streamlit(csv_predict_path, csv_rolled_path, json_d
         csv_predict_name = f'{csv_predict_path}{os.sep}{csv}'
         csv_loss_name = f'{csv_loss_path}{os.sep}{loss}'
         csv_rolled_name = f'{csv_rolled_path}{os.sep}{rolled}'
+        csv_data_name = csv_data_path
+
         dict_list = []
         try:
             logger.info(f'Read_file: {csv_predict_name}')
             anomaly_time_df = pd.read_csv(csv_predict_name)
-            rolled_df = pd.read_csv(csv_rolled_name)
+            data_df = pd.read_csv(csv_data_name)
+            #rolled_df = pd.read_csv(csv_rolled_name)
+
+            # Сглаживание и сохранение результата
+            rolled_df = rolling_probability(anomaly_time_df, roll_probability, number_of_samples)
+            #rolled_df.to_csv(csv_rolled_name, index=False)
+
+            # merge фрейма вероятности с slice csv по timestamp
+            if len(rolled_df) != len(data_df):
+                logger.info("merge rolled_df with data_df by timestamp")
+                time_df = pd.DataFrame()
+                time_df['timestamp'] = data_df['timestamp']
+                rolled_df = pd.merge(time_df, rolled_df, how='left', on='timestamp')
+                rolled_df.fillna(method='ffill', inplace=True)
+                rolled_df.fillna(value={"target_value": 0}, inplace=True)
+                rolled_df.to_csv(csv_rolled_name, index=False)
+
+            rolled_df.index = rolled_df['timestamp']
+            rolled_df = rolled_df.drop(columns=['timestamp'])
 
             # Сглаживание и сохранение результата
             # rolled_df = rolling_probability(anomaly_time_df, roll_probability, number_of_samples)

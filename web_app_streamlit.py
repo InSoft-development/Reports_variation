@@ -361,24 +361,25 @@ except Exception as e:
 # получение данных csv группы сглаженной вероятности
 try:
     logger.info(f'Read_file: {CSV_ROLLED_NAME}')
-    #rolled_df = pd.read_csv(f'{CSV_ROLLED_NAME}')
+    rolled_df = pd.read_csv(f'{CSV_ROLLED_NAME}')
     # Сглаживание
-    rolled_df = rolling_probability(anomaly_time_df, st.session_state.roll, NUMBER_OF_SAMPLES)
+    #rolled_df = rolling_probability(anomaly_time_df, st.session_state.roll, NUMBER_OF_SAMPLES)
 
     # merge фрейма вероятности с slice csv по timestamp
-    if len(rolled_df) != len(data_df):
-        logger.info("merge rolled_df with data_df by timestamp")
-        rolled_df = pd.merge(time_df, rolled_df, how='left', left_index=True, right_index=True)
-        # time_df = pd.merge(time_df, rolled_df, how='left', on='timestamp')
-        # rolled_df = time_df
-        rolled_df.fillna(method='ffill', inplace=True)
-        rolled_df.fillna(value={"target_value": 0}, inplace=True)
-        rolled_df.to_csv(f'{CSV_ROLLED_NAME}', index=False)
-        rolled_df = rolled_df.drop(columns=['timestamp'])
-    rolled_df.fillna(method='ffill', inplace=True)
-    rolled_df.fillna(value={"target_value": 0}, inplace=True)
-    #rolled_df.index = rolled_df['timestamp']
-    #rolled_df = rolled_df.drop(columns=['timestamp'])
+    # if len(rolled_df) != len(data_df):
+    #     logger.info("merge rolled_df with data_df by timestamp")
+    #     rolled_df = pd.merge(time_df, rolled_df, how='left', left_index=True, right_index=True)
+    #     # time_df = pd.merge(time_df, rolled_df, how='left', on='timestamp')
+    #     # rolled_df = time_df
+    #     rolled_df.fillna(method='ffill', inplace=True)
+    #     rolled_df.fillna(value={"target_value": 0}, inplace=True)
+    #     #rolled_df.to_csv(f'{CSV_ROLLED_NAME}', index=False)
+    #     rolled_df = rolled_df.drop(columns=['timestamp'])
+    # rolled_df.fillna(method='ffill', inplace=True)
+    # rolled_df.fillna(value={"target_value": 0}, inplace=True)
+    # rolled_df.to_csv(f'{CSV_ROLLED_NAME}', index=True)
+    rolled_df.index = rolled_df['timestamp']
+    rolled_df = rolled_df.drop(columns=['timestamp'])
 except Exception as e:
     print(e)
     logger.error(e)
@@ -548,7 +549,7 @@ if selected_menu == "Интервалы":
                 submitted_interval_detection = st.form_submit_button("Запустить выделение интервалов")
                 if submitted_interval_detection:
                     st.write("Выделение интервалов")
-                    get_interval_streamlit.rebuilt_anomaly_interval_streamlit(CSV_PREDICT, CSV_ROLLED,
+                    get_interval_streamlit.rebuilt_anomaly_interval_streamlit(CSV_PREDICT, CSV_ROLLED, CSV_DATA_NAME,
                                                                               JSON_DIR, CSV_LOSS,
                                                                               roll_probability,
                                                                               NUMBER_OF_SAMPLES,
