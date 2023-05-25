@@ -378,6 +378,8 @@ try:
     # rolled_df.fillna(method='ffill', inplace=True)
     # rolled_df.fillna(value={"target_value": 0}, inplace=True)
     # rolled_df.to_csv(f'{CSV_ROLLED_NAME}', index=True)
+    rolled_df.fillna(method='ffill', inplace=True)
+    rolled_df.fillna(value={"target_value": 0}, inplace=True)
     rolled_df.index = rolled_df['timestamp']
     rolled_df = rolled_df.drop(columns=['timestamp'])
 except Exception as e:
