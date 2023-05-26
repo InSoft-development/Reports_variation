@@ -26,14 +26,14 @@ def home_plot(df_common, anomaly_interval, col_list, interval_list, config):
     )
     fig.update_layout({"uirevision": "foo"}, overwrite=True)
     for interval in interval_list:
-        if (interval[0] - config["model"]["delta_tau_P"] * config["number_of_samples"]) <= 0:
+        if interval[0] <= 0:
             fig.add_vrect(
                 x0=df_common.index[interval[0]],
                 x1=df_common.index[interval[-1]],
                 line_width=1, line_color="red", layer="below")
         else:
             fig.add_vrect(
-                x0=df_common.index[interval[0] - config["model"]["delta_tau_P"] * config["number_of_samples"]],
+                x0=df_common.index[interval[0]],
                 x1=df_common.index[interval[-1]],
                 line_width=1, line_color="red", layer="below")
     st.plotly_chart(fig, config=dict(displayModeBar=False, scrollZoom=True), use_container_width=True)
@@ -67,12 +67,11 @@ def tab_plot(idx, df_common, merged_interval_list, col_list, interval_list, LEFT
     )
     fig.update_layout({"uirevision": "foo"}, overwrite=True)
     if merged_interval_list[idx] in interval_list:
-        if (merged_interval_list[idx][0] - config["model"]["delta_tau_P"] * config["number_of_samples"]) <= 0:
+        if merged_interval_list[idx][0] <= 0:
             fig.add_vrect(x0=df_common.index[merged_interval_list[idx][0]],
                           x1=df_common.index[merged_interval_list[idx][-1]], line_width=2, line_color="red", layer="below")
         else:
-            fig.add_vrect(x0=df_common.index[merged_interval_list[idx][0] -
-                                             config["model"]["delta_tau_P"] * config["number_of_samples"]],
+            fig.add_vrect(x0=df_common.index[merged_interval_list[idx][0]],
                           x1=df_common.index[merged_interval_list[idx][-1]], line_width=2, line_color="red",
                           layer="below")
     st.plotly_chart(fig, config=dict(displayModeBar=False, scrollZoom=True), use_container_width=True)
@@ -300,13 +299,12 @@ def sensor_plot(idx, jdx, df_common, df_sensors, merged_interval_list, interval_
     fig.update_layout({"uirevision": "foo"}, overwrite=True)
     if merged_interval_list[idx] in interval_list:
         # Выделение красным прямоугольником
-        if (merged_interval_list[idx][0] - config["model"]["delta_tau_P"]*config["number_of_samples"]) <= 0:
+        if merged_interval_list[idx][0] <= 0:
             fig.add_vrect(x0=df_sensors.index[merged_interval_list[idx][0]],
                           x1=df_sensors.index[merged_interval_list[idx][-1]],
                           line_width=2, line_color="red", layer="below")
         else:
-            fig.add_vrect(x0=df_sensors.index[merged_interval_list[idx][0] -
-                                             config["model"]["delta_tau_P"] * config["number_of_samples"]],
+            fig.add_vrect(x0=df_sensors.index[merged_interval_list[idx][0]],
                           x1=df_sensors.index[merged_interval_list[idx][-1]],
                           line_width=2, line_color="red", layer="below")
     fig_container.plotly_chart(fig, config=dict(displayModeBar=False, scrollZoom=True), use_container_width=True)

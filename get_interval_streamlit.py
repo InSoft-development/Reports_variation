@@ -88,6 +88,10 @@ def rebuilt_anomaly_interval_streamlit(csv_predict_path, csv_rolled_path, csv_da
         csv_rolled_name = f'{csv_rolled_path}{os.sep}{rolled}'
         csv_data_name = csv_data_path
 
+        json_name_begin_index = csv_predict_name.rfind('_')
+        json_name_end_index = csv_predict_name.find('.csv')
+        json_name = f"{json_dir}{os.sep}group{csv_predict_name[json_name_begin_index:json_name_end_index]}.json"
+
         dict_list = []
         try:
             logger.info(f'Read_file: {csv_predict_name}')
@@ -142,8 +146,9 @@ def rebuilt_anomaly_interval_streamlit(csv_predict_path, csv_rolled_path, csv_da
                 }
                 dict_list.append(report_dict)
 
-            with open(f"{json_dir}{os.sep}group_{i+1}.json", "w") as outfile:
+            with open(json_name, "w") as outfile:
                 json.dump(dict_list, outfile, indent=4)
+            logger.info(f'{json_name} has been saved')
 
         except Exception as e:
             logger.error(e)

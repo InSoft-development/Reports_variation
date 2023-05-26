@@ -19,13 +19,13 @@ def get_home_fig_potentials(df_common, anomaly_interval, interval_list, config):
     )
     fig.update_layout({"uirevision": "foo"}, overwrite=True)
     for interval in interval_list:
-        if (interval[0] - config["model"]["delta_tau_P"] * config["number_of_samples"]) <= 0:
+        if interval[0] <= 0:
             fig.add_vrect(
                 x0=df_common.index[interval[0]],
                 x1=df_common.index[interval[-1]],
                 line_width=1, line_color="red", layer="below")
         else:
-            fig.add_vrect(x0=df_common.index[interval[0] - config["model"]["delta_tau_P"] * config["number_of_samples"]],
+            fig.add_vrect(x0=df_common.index[interval[0]],
                           x1=df_common.index[interval[-1]],
                           line_width=1, line_color="red", layer="below")
     return fig
@@ -56,12 +56,11 @@ def get_tab_fig_potentials(df_common, merged_interval_list, interval_list, LEFT_
     )
     fig.update_layout({"uirevision": "foo"}, overwrite=True)
     if merged_interval_list in interval_list:
-        if (merged_interval_list[0] - config["model"]["delta_tau_P"]*config["number_of_samples"]) <= 0:
+        if merged_interval_list[0] <= 0:
             fig.add_vrect(x0=df_common.index[merged_interval_list[0]],
                           x1=df_common.index[merged_interval_list[-1]], line_width=2, line_color="red", layer="below")
         else:
-            fig.add_vrect(x0=df_common.index[merged_interval_list[0] -
-                                             config["model"]["delta_tau_P"]*config["number_of_samples"]],
+            fig.add_vrect(x0=df_common.index[merged_interval_list[0]],
                           x1=df_common.index[merged_interval_list[-1]], line_width=2, line_color="red", layer="below")
     return fig
 
@@ -183,13 +182,12 @@ def get_sensor_fig_potentials(df_common, df_sensors, top, merged_interval_list, 
         idx_feature += 1
     if merged_interval_list in interval_list:
         # Выделение красным прямоугольником
-        if (merged_interval_list[0] - config["model"]["delta_tau_P"]*config["number_of_samples"]) <= 0:
+        if merged_interval_list[0] <= 0:
             fig.add_vrect(x0=df_sensors.index[merged_interval_list[0]],
                           x1=df_sensors.index[merged_interval_list[-1]],
                           line_width=2, line_color="red", layer="below")
         else:
-            fig.add_vrect(x0=df_sensors.index[merged_interval_list[0]-
-                                             config["model"]["delta_tau_P"]*config["number_of_samples"]],
+            fig.add_vrect(x0=df_sensors.index[merged_interval_list[0]],
                           x1=df_sensors.index[merged_interval_list[-1]],
                           line_width=2, line_color="red", layer="below")
     fig.update_layout({"uirevision": "foo"}, overwrite=True)
@@ -303,8 +301,7 @@ def get_another_sensor_fig_potentials(df_common, df_sensors, tops, merged_interv
     if merged_interval_list in interval_list:
         # Выделение красным прямоугольником
 
-        fig.add_vrect(x0=df_common.index[merged_interval_list[0]-
-                                         config["model"]["delta_tau_P"]*config["number_of_samples"]],
+        fig.add_vrect(x0=df_common.index[merged_interval_list[0]],
                       x1=df_common.index[merged_interval_list[-1]],
                       line_width=2, line_color="red", layer="below")
     fig.update_layout({"uirevision": "foo"}, overwrite=True)
@@ -352,8 +349,7 @@ def get_another_sensor_fig_potentials(df_common, df_sensors, tops, merged_interv
             if merged_interval_list in interval_list:
                 # Выделение красным прямоугольником
 
-                fig_others.add_vrect(x0=df_common.index[merged_interval_list[0] -
-                                                        config["model"]["delta_tau_P"] * config["number_of_samples"]],
+                fig_others.add_vrect(x0=df_common.index[merged_interval_list[0]],
                                      x1=df_common.index[merged_interval_list[-1]],
                                      line_width=2, line_color="red", layer="below")
             fig_others_list.append(fig_others)
@@ -440,8 +436,7 @@ def get_another_sensor_fig_potentials(df_common, df_sensors, tops, merged_interv
     if merged_interval_list in interval_list:
         # Выделение красным прямоугольником
 
-        fig_others.add_vrect(x0=df_common.index[merged_interval_list[0] -
-                                                config["model"]["delta_tau_P"] * config["number_of_samples"]],
+        fig_others.add_vrect(x0=df_common.index[merged_interval_list[0]],
                              x1=df_common.index[merged_interval_list[-1]],
                              line_width=2, line_color="red", layer="below")
     fig_others_list.append(fig_others)
