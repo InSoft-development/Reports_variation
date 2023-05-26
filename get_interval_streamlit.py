@@ -1,6 +1,7 @@
 import json
 import os
-
+import numpy as np
+import scipy
 import pandas as pd
 from loguru import logger
 
@@ -109,9 +110,9 @@ def rebuilt_anomaly_interval_streamlit(csv_predict_path, csv_rolled_path, csv_da
                 time_df = pd.DataFrame()
                 time_df['timestamp'] = data_df['timestamp']
                 rolled_df = pd.merge(time_df, rolled_df, how='left', on='timestamp')
-                rolled_df.fillna(method='ffill', inplace=True)
-                rolled_df.fillna(value={"target_value": 0}, inplace=True)
-                #rolled_df.to_csv(csv_rolled_name, index=False)
+            rolled_df.fillna(method='ffill', inplace=True)
+            rolled_df.fillna(value={"target_value": 0}, inplace=True)
+
             rolled_df.to_csv(csv_rolled_name, index=False)
             rolled_df.index = rolled_df['timestamp']
             rolled_df = rolled_df.drop(columns=['timestamp'])
