@@ -11,7 +11,7 @@ import scipy.stats
 
 # отрисовка графика вероятности по всем периодам группы
 @st.cache_data()
-def home_plot(df_common, anomaly_interval, col_list, interval_list, config):
+def home_plot(df_common, anomaly_interval, col_list, interval_list):
     fig = px.line(
         df_common.iloc[anomaly_interval[0]:anomaly_interval[-1]],
         x=df_common.iloc[anomaly_interval[0]:anomaly_interval[-1]].index.to_list(),
@@ -42,7 +42,7 @@ def home_plot(df_common, anomaly_interval, col_list, interval_list, config):
 
 # отрисовка графика вероятности определенного периода
 @st.cache_data
-def tab_plot(idx, df_common, merged_interval_list, col_list, interval_list, LEFT_SPACE, RIGHT_SPACE, config):
+def tab_plot(idx, df_common, merged_interval_list, col_list, interval_list, LEFT_SPACE, RIGHT_SPACE):
 
     if merged_interval_list[idx][0] > LEFT_SPACE:
         left_space = LEFT_SPACE
@@ -80,7 +80,7 @@ def tab_plot(idx, df_common, merged_interval_list, col_list, interval_list, LEFT
 
 # отрисовка многоосевых графиков
 def sensor_plot(idx, jdx, df_common, df_sensors, merged_interval_list, interval_list, signal_checked_name_list,
-                PLOT_FEATURES, LEFT_SPACE, RIGHT_SPACE, dict_kks, config):
+                PLOT_FEATURES, LEFT_SPACE, RIGHT_SPACE, dict_kks):
     if signal_checked_name_list[jdx] not in PLOT_FEATURES:
         col_sensors_list = [signal_checked_name_list[jdx]] + PLOT_FEATURES
     else:

@@ -1,6 +1,7 @@
 import datetime
 import json
 import os
+import errno
 
 import streamlit as st
 from loguru import logger
@@ -41,7 +42,7 @@ def ParagGuy_legend(text, color, style=styles['Normal']):
 
 def get_common_report(fig_home, df_common, data_df, merged_interval_list, interval_list, tab_name_list,
                       WEB_APP_REPORTS, web_app_group, web_app_period_reports,  merged_top_list,
-                      LEFT_SPACE, RIGHT_SPACE, PLOT_FEATURES, DROP_LIST, dict_kks, config, home_text, tab_text):
+                      LEFT_SPACE, RIGHT_SPACE, PLOT_FEATURES, DROP_LIST, dict_kks, home_text, tab_text):
     progress_report_bar = st.progress(value=0)
     fig_home.write_image(f'{WEB_APP_REPORTS}/home_img.png', engine="kaleido", width=900, height=800)
 
@@ -103,11 +104,13 @@ def get_common_report(fig_home, df_common, data_df, merged_interval_list, interv
         tab_dir_name = period[1:-1].replace(':', '-').replace('/', '-').replace(" ", "_").replace(";", "--")
         try:
             os.mkdir(f'{web_app_period_reports}/{tab_dir_name}')
-        except Exception as e:
-            print(e)
-            logger.info('Reports dir exist!')
+        except OSError as e:
+            if e.errno != errno.EEXIST:
+                logger.error(e)
+                st.write(f'Error has been occurred on create {web_app_period_reports}/{tab_dir_name}')
+                st.stop()
         tab_fig = get_fig_streamlit.get_tab_fig_potentials(df_common, merged_interval_list[count], interval_list,
-                                                           LEFT_SPACE, RIGHT_SPACE, config)
+                                                           LEFT_SPACE, RIGHT_SPACE)
         tab_fig.write_image(f'{web_app_period_reports}/{tab_dir_name}/tab_img.png', engine="kaleido")
         path_tab_fig = f'{web_app_period_reports}/{tab_dir_name}/tab_img.png'
         im = Image(path_tab_fig, 8 * inch * scale, 4 * inch * scale)
@@ -133,7 +136,7 @@ def get_common_report(fig_home, df_common, data_df, merged_interval_list, interv
                 sensor_fig, legend_list, palette_list = \
                     get_fig_streamlit.get_sensor_fig_potentials(df_common, df_sensors, top, merged_interval_list[count],
                                                                 interval_list,
-                                                                LEFT_SPACE, RIGHT_SPACE, PLOT_FEATURES, config)
+                                                                LEFT_SPACE, RIGHT_SPACE, PLOT_FEATURES)
                 sensor_fig.write_image(f'{web_app_period_reports}/{tab_dir_name}/'
                                        f'sensor_img_{top}.png', engine="kaleido", width=1200, height=1000)
 
@@ -165,15 +168,14 @@ def get_common_report(fig_home, df_common, data_df, merged_interval_list, interv
 def get_common_from_sidebar_report(anomaly_time_df, data_df,
                                    group_intervals, added_intervals, interval_list, progress_bar,
                                    web_app_group, web_app_period_reports, LEFT_SPACE, RIGHT_SPACE,
-                                   PLOT_FEATURES, DROP_LIST, dict_kks, config, home_text, tab_text):
+                                   PLOT_FEATURES, DROP_LIST, dict_kks, home_text, tab_text):
     tab_name_list = ["Главная"]
     df_common = anomaly_time_df
     anomaly_interval = [0, len(df_common)]
     try:
         f = open(group_intervals, 'r')
         j = json.load(f)
-    except Exception as e:
-        print(e)
+    except OSError as e:
         logger.error(e)
     try:
         with open(added_intervals, 'r', encoding='utf8') as f:
@@ -209,7 +211,7 @@ def get_common_from_sidebar_report(anomaly_time_df, data_df,
                              datetime.datetime.strptime(data_df.index[tab[-1]], "%Y-%m-%d %H:%M:%S")
                              .strftime("%d/%m/%y %H:%M:%S") + ")")
 
-    fig_home = get_fig_streamlit.get_home_fig_potentials(df_common, anomaly_interval, interval_list, config)
+    fig_home = get_fig_streamlit.get_home_fig_potentials(df_common, anomaly_interval, interval_list)
     fig_home.write_image(f'{web_app_group}/home_img.png', engine="kaleido", width=900, height=800)
 
     styles = getSampleStyleSheet()
@@ -269,11 +271,13 @@ def get_common_from_sidebar_report(anomaly_time_df, data_df,
         tab_dir_name = period[1:-1].replace(':', '-').replace('/', '-').replace(" ", "_").replace(";", "--")
         try:
             os.mkdir(f'{web_app_period_reports}/{tab_dir_name}')
-        except Exception as e:
-            print(e)
-            logger.info('Reports dir exist!')
+        except OSError as e:
+            if e.errno != errno.EEXIST:
+                logger.error(e)
+                st.write(f'Error has been occurred on create {web_app_period_reports}/{tab_dir_name}')
+                st.stop()
         tab_fig = get_fig_streamlit.get_tab_fig_potentials(df_common, merged_interval_list[count], interval_list,
-                                                           LEFT_SPACE, RIGHT_SPACE, config)
+                                                           LEFT_SPACE, RIGHT_SPACE)
         tab_fig.write_image(f'{web_app_period_reports}/{tab_dir_name}/tab_img.png', engine="kaleido")
         path_tab_fig = f'{web_app_period_reports}/{tab_dir_name}/tab_img.png'
         im = Image(path_tab_fig, 8 * inch * scale, 4 * inch * scale)
@@ -298,7 +302,7 @@ def get_common_from_sidebar_report(anomaly_time_df, data_df,
                 sensor_fig, legend_list, palette_list = \
                     get_fig_streamlit.get_sensor_fig_potentials(df_common, df_sensors, top, merged_interval_list[count],
                                                                 interval_list,
-                                                                LEFT_SPACE, RIGHT_SPACE, PLOT_FEATURES, config)
+                                                                LEFT_SPACE, RIGHT_SPACE, PLOT_FEATURES)
                 sensor_fig.write_image(f'{web_app_period_reports}/{tab_dir_name}/'
                                        f'sensor_img_{top}.png', engine="kaleido", width=1200, height=1000)
 
@@ -329,8 +333,7 @@ def get_common_from_sidebar_report(anomaly_time_df, data_df,
         #                                                                                      dict_kks,
         #                                                                                      LEFT_SPACE,
         #                                                                                      RIGHT_SPACE,
-        #                                                                                      PLOT_FEATURES, DROP_LIST,
-        #                                                                                      config)
+        #                                                                                      PLOT_FEATURES, DROP_LIST)
         # sensor_another_fig.write_image(f'{web_app_group}/sensor_another_fig_{count}.png',
         #                                engine="kaleido", width=1200, height=1000)
         # naming_temp = 0

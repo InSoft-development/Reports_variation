@@ -2,6 +2,7 @@ import argparse
 import datetime
 import json
 import os
+import errno
 
 import extra_streamlit_components as stx
 import pandas as pd
@@ -49,7 +50,7 @@ def sort_correction_json(added):
             swap_dict = added[begin:j + 1]
             swap_dict.sort(key=lambda swap_dict: swap_dict["index"][-1] - swap_dict["index"][0], reverse=False)
             added[begin:j + 1] = swap_dict
-            logger.info(added)
+            logger.info("json intervals has been sorted")
 
 
 # загрузка KKS и описания датчиков группы
@@ -57,36 +58,8 @@ def sort_correction_json(added):
 def load_kks():
     df_kks = pd.read_csv(DICT_KKS, delimiter=';', header=None)
     df_kks = df_kks.loc[~df_kks[0].isin(config_plot_json['DROP_LIST'])]
-    # idx = 0
-    # while int(st.session_state.selected_group) != int(list(json_dict['groups'][idx].keys())[0]):
-    #     idx += 1
-    # union_sensors = json_dict['groups'][idx][st.session_state.selected_group]['unions']
-    # single_sensors = json_dict['groups'][idx][st.session_state.selected_group]['single sensors']
-    # if union_sensors == "null":
-    #     group_sensors = single_sensors + PLOT_FEATURES
-    # elif single_sensors == "null":
-    #     group_sensors = union_sensors + PLOT_FEATURES
-    # else:
-    #     group_sensors = union_sensors + single_sensors + PLOT_FEATURES
-    # print(df_kks)
-    # print("***********************")
-    # print(group_sensors)
-    # df_kks = df_kks.loc[df_kks[0].isin(group_sensors)]
-    # print("***********************")
-    # print(df_kks)
-    # st.stop()
     kks_dict = dict(zip(df_kks[0].to_list(), df_kks[1].to_list()))
-    # print(kks_dict)
     return kks_dict
-
-
-def rolling_probability(df, roll_in_hours, number_of_samples):
-    # Первые индексы после сглаживания будут Nan, запоминаем их
-    temp_rows = df['target_value'].iloc[:roll_in_hours*number_of_samples]
-    rolling_prob = df['target_value'].rolling(window=roll_in_hours*number_of_samples, min_periods=1, axis='rows').mean()
-    rolling_prob.iloc[:roll_in_hours*number_of_samples] = temp_rows
-    df['target_value'] = rolling_prob
-    return df
 
 
 # выбранный период
@@ -102,11 +75,6 @@ if "selection_flag" not in st.session_state:
 if "edit_flag" not in st.session_state:
     st.session_state.edit_flag = 0
     st.session_state.edit_index = 0
-
-# массив открытых вкладок
-# if "opened_tab" not in st.session_state:
-#     st.session_state.opened_tab = ["Главная"]
-
 
 # флаг открытия вкладки
 if "navigation_tab_flag" not in st.session_state:
@@ -147,51 +115,55 @@ WEB_APP_REPORTS = f'{WEB_APP_REPORTS_DIR}{st.session_state.checked_method}/'
 METHODS = ["Potentials", "LSTM"]
 METHODS_DIR = f'{DATA_DIR}{st.session_state.checked_method}/'
 
-# JSON_INTERVAL_DIR = f'{DATA_DIR}/json_interval/'
-# JSON_DIR = f'{JSON_INTERVAL_DIR}{st.session_state.checked_method}'
 JSON_DIR = f'{METHODS_DIR}json_interval/'
 
 CSV_DATA = f'{DATA_DIR}/csv_data/'
 CSV_PREDICT = f'{METHODS_DIR}csv_predict/'
 CSV_ROLLED = f'{METHODS_DIR}csv_rolled/'
 CSV_LOSS = f'{METHODS_DIR}csv_loss/'
-# CSV_PREDICT_DIR = f'{DATA_DIR}/csv_predict/'
-# CSV_PREDICT = f'{CSV_PREDICT_DIR}{st.session_state.checked_method}'
-# CSV_LOSS_DIR = f'{DATA_DIR}/csv_loss/'
-# CSV_LOSS = f'{CSV_LOSS_DIR}{st.session_state.checked_method}'
 
 LEFT_SPACE = st.session_state.LEFT_SPACE
 RIGHT_SPACE = st.session_state.RIGHT_SPACE
 
 try:
     os.mkdir(f'{WEB_APP_DIR}')
-except Exception as e:
-    print(e)
-    logger.info(f'{WEB_APP_DIR} dir exist!')
+except OSError as e:
+    if e.errno != errno.EEXIST:
+        logger.error(e)
+        st.write(f'Error has been occurred on create {WEB_APP_DIR}')
+        st.stop()
 
 try:
     os.mkdir(f'{WEB_APP_REPORTS_DIR}')
-except Exception as e:
-    print(e)
-    logger.info(f'{WEB_APP_REPORTS_DIR} dir exist!')
+except OSError as e:
+    if e.errno != errno.EEXIST:
+        logger.error(e)
+        st.write(f'Error has been occurred on create {WEB_APP_REPORTS_DIR}')
+        st.stop()
 
 try:
     os.mkdir(f'{WEB_APP_REPORTS}')
-except Exception as e:
-    print(e)
-    logger.info(f'{WEB_APP_REPORTS} dir exist!')
+except OSError as e:
+    if e.errno != errno.EEXIST:
+        logger.error(e)
+        st.write(f'Error has been occurred on create {WEB_APP_REPORTS}')
+        st.stop()
 
 try:
     os.mkdir(f'{DATA_DIR}')
-except Exception as e:
-    print(e)
-    logger.info(f'{DATA_DIR} dir exist!')
+except OSError as e:
+    if e.errno != errno.EEXIST:
+        logger.error(e)
+        st.write(f'Error has been occurred on create {DATA_DIR}')
+        st.stop()
 
 try:
     os.mkdir(f'{CSV_DATA}')
-except Exception as e:
-    print(e)
-    logger.info(f'{CSV_DATA} dir exist!')
+except OSError as e:
+    if e.errno != errno.EEXIST:
+        logger.error(e)
+        st.write(f'Error has been occurred on create {CSV_DATA}')
+        st.stop()
 
 for method in METHODS:
     csv_predict = f'{DATA_DIR}{method}{os.sep}csv_predict{os.sep}'
@@ -201,55 +173,39 @@ for method in METHODS:
 
     try:
         os.mkdir(f'{DATA_DIR}{method}')
-    except Exception as e:
-        print(e)
-        logger.info(f'{DATA_DIR}{method} dir exist!')
+    except OSError as e:
+        if e.errno != errno.EEXIST:
+            logger.error(e)
+            st.write(f'Error has been occurred on create {DATA_DIR}{method}')
+            st.stop()
     try:
         os.mkdir(csv_predict)
-    except Exception as e:
-        print(e)
-        logger.info(f'{DATA_DIR}{method} dir exist!')
+    except OSError as e:
+        if e.errno != errno.EEXIST:
+            logger.error(e)
+            st.write(f'Error has been occurred on create {csv_predict}')
+            st.stop()
     try:
         os.mkdir(csv_rolled)
-    except Exception as e:
-        print(e)
-        logger.info(f'{DATA_DIR}{method} dir exist!')
+    except OSError as e:
+        if e.errno != errno.EEXIST:
+            logger.error(e)
+            st.write(f'Error has been occurred on create {csv_rolled}')
+            st.stop()
     try:
         os.mkdir(csv_loss)
-    except Exception as e:
-        print(e)
-        logger.info(f'{DATA_DIR}{method} dir exist!')
+    except OSError as e:
+        if e.errno != errno.EEXIST:
+            logger.error(e)
+            st.write(f'Error has been occurred on create {csv_loss}')
+            st.stop()
     try:
         os.mkdir(json_dir)
-    except Exception as e:
-        print(e)
-        logger.info(f'{DATA_DIR}{method} dir exist!')
-
-
-# try:
-#     os.mkdir(f'{JSON_INTERVAL_DIR}')
-# except Exception as e:
-#     print(e)
-#     logger.info(f'{JSON_INTERVAL_DIR} dir exist!')
-
-
-# try:
-#     os.mkdir(f'{CSV_PREDICT_DIR}')
-# except Exception as e:
-#     print(e)
-#     logger.info(f'{CSV_PREDICT_DIR} dir exist!')
-
-# try:
-#     os.mkdir(f'{CSV_LOSS_DIR}')
-# except Exception as e:
-#     print(e)
-#     logger.info(f'{CSV_LOSS_DIR} dir exist!')
-
-# try:
-#     os.mkdir(f'{JSON_DIR}')
-# except Exception as e:
-#     print(e)
-#     logger.info(f'{JSON_DIR} dir exist!')
+    except OSError as e:
+        if e.errno != errno.EEXIST:
+            logger.error(e)
+            st.write(f'Error has been occurred on create {json_dir}')
+            st.stop()
 
 try:
     with open(f'{WEB_APP_DIR}config_plot_{opt.station}.json', 'r', encoding='utf8') as j:
@@ -289,9 +245,8 @@ NUMBER_OF_SAMPLES = config["number_of_samples"]
 index_group = [list(x.keys())[0] for x in json_dict["groups"]]
 if index_group[0] == '0':
     index_group.remove('0')
-logger.info(f'groups: {index_group}')
+logger.info(f'finded groups: {index_group}')
 
-# index_group = [x+" "+json_dict["groups"]["name"] for x in index_group]
 selector_index_group = [x + " " + "(" + json_dict["groups"][int(x)][str(x)]['name'] + ")" for x in index_group]
 
 for group in index_group:
@@ -299,16 +254,20 @@ for group in index_group:
 
     try:
         os.mkdir(f'{web_app_group}')
-    except Exception as e:
-        print(e)
-        logger.info(f'{web_app_group} dir exist!')
+    except OSError as e:
+        if e.errno != errno.EEXIST:
+            logger.error(e)
+            st.write(f'Error has been occurred on create {web_app_group}')
+            st.stop()
 
     web_app_period_reports = f'{web_app_group}/periods'
     try:
         os.mkdir(f'{web_app_period_reports}/')
-    except Exception as e:
-        print(e)
-        logger.info(f'{web_app_period_reports} dir exist!')
+    except OSError as e:
+        if e.errno != errno.EEXIST:
+            logger.error(e)
+            st.write(f'Error has been occurred on create {web_app_period_reports}')
+            st.stop()
 
 if not st.session_state.flag_group:
     st.session_state.flag_group = True
@@ -335,55 +294,27 @@ try:
     time_df.index = time_df['timestamp']
     data_df.index = data_df['timestamp']
     data_df = data_df.drop(columns=['timestamp'])
-    # data_df.fillna(data_df.mean(), inplace=True)
 except Exception as e:
-    print(e)
     logger.error(e)
 
 # получение данных csv группы по вероятности аномалии
 try:
     logger.info(f'Read_file: {CSV_PREDICT_NAME}')
     anomaly_time_df = pd.read_csv(f'{CSV_PREDICT_NAME}')
-    # # merge фрейма вероятности с slice csv по timestamp
-    # if len(anomaly_time_df) != len(data_df):
-    #     logger.info("merge anomaly_time_df with data_df by timestamp")
-    #     time_df = pd.merge(time_df, anomaly_time_df, how='left', on='timestamp')
-    #     anomaly_time_df = time_df
-    #     anomaly_time_df.fillna(method='ffill', inplace=True)
-    #     anomaly_time_df.fillna(value={"target_value": 0}, inplace=True)
-    #     anomaly_time_df.to_csv(f'{CSV_PREDICT_NAME}', index=False)
     anomaly_time_df.index = anomaly_time_df['timestamp']
     anomaly_time_df = anomaly_time_df.drop(columns=['timestamp'])
 except Exception as e:
-    print(e)
     logger.error(e)
 
 # получение данных csv группы сглаженной вероятности
 try:
     logger.info(f'Read_file: {CSV_ROLLED_NAME}')
     rolled_df = pd.read_csv(f'{CSV_ROLLED_NAME}')
-    # Сглаживание
-    #rolled_df = rolling_probability(anomaly_time_df, st.session_state.roll, NUMBER_OF_SAMPLES)
-
-    # merge фрейма вероятности с slice csv по timestamp
-    # if len(rolled_df) != len(data_df):
-    #     logger.info("merge rolled_df with data_df by timestamp")
-    #     rolled_df = pd.merge(time_df, rolled_df, how='left', left_index=True, right_index=True)
-    #     # time_df = pd.merge(time_df, rolled_df, how='left', on='timestamp')
-    #     # rolled_df = time_df
-    #     rolled_df.fillna(method='ffill', inplace=True)
-    #     rolled_df.fillna(value={"target_value": 0}, inplace=True)
-    #     #rolled_df.to_csv(f'{CSV_ROLLED_NAME}', index=False)
-    #     rolled_df = rolled_df.drop(columns=['timestamp'])
-    # rolled_df.fillna(method='ffill', inplace=True)
-    # rolled_df.fillna(value={"target_value": 0}, inplace=True)
-    # rolled_df.to_csv(f'{CSV_ROLLED_NAME}', index=True)
     rolled_df.fillna(method='ffill', inplace=True)
     rolled_df.fillna(value={"target_value": 0}, inplace=True)
     rolled_df.index = rolled_df['timestamp']
     rolled_df = rolled_df.drop(columns=['timestamp'])
 except Exception as e:
-    print(e)
     logger.error(e)
 
 # получение данных csv по вкладам датчиков в аномалию
@@ -393,7 +324,6 @@ try:
     loss_df.index = loss_df['timestamp']
     loss_df = loss_df.drop(columns=['timestamp'])
 except Exception as e:
-    print(e)
     logger.error(e)
 
 # считывание интервалов аномальности по каждой группе
@@ -408,7 +338,6 @@ try:
     top_list.append(top_sensors)
     top_sensors = []
 except Exception as e:
-    print(e)
     logger.error(e)
 
 try:
@@ -449,23 +378,16 @@ if selected_menu == "Интервалы":
                 unsafe_allow_html=True)
     with st.sidebar:
         method_radio = st.radio("Метод", options=METHODS, index=0, key="method_radio")
-
-        # selected_group_sidebar = st.selectbox("Группа", options=index_group,
-        #                                       key="group_select_box_sidebar", label_visibility="visible", index=0)
         selected_group_sidebar = st.selectbox("Группа", options=selector_index_group,
                                               key="group_select_box_sidebar", label_visibility="visible", index=0)
         st.session_state.selected_name = selected_group_sidebar
         if st.session_state.checked_method != method_radio:
             st.session_state.checked_method = method_radio
-            # st.session_state.opened_tab = ["Главная"]
-            # st.session_state.selected_group = selected_group_sidebar
             st.session_state.selected_group = selected_group_sidebar[:selected_group_sidebar.find(' ')]
             st.session_state.selection_interval = 0
             st.experimental_rerun()
-        # if st.session_state.selected_group != selected_group_sidebar:
         if st.session_state.selected_group != selected_group_sidebar[:selected_group_sidebar.find(' ')]:
             st.session_state.selected_group = selected_group_sidebar[:selected_group_sidebar.find(' ')]
-            # st.session_state.opened_tab = ["Главная"]
             st.session_state.selection_interval = 0
             st.experimental_rerun()
     web_app_group = f'{WEB_APP_REPORTS}/group_{st.session_state.selected_group}/'
@@ -516,11 +438,6 @@ if selected_menu == "Интервалы":
         tab_bar_list.append(tab_bar_item)
         tab_sidebar_list.append(tab)
         count += 1
-        # if tab in st.session_state.opened_tab:
-        #     tab_bar_item = stx.TabBarItemData(id=tab_name_list.index(tab), title=tab, description="")
-        #     tab_bar_list.append(tab_bar_item)
-        #     tab_sidebar_list.append(tab)
-        #     count += 1
     with st.sidebar:
         selected_interval_sidebar = st.selectbox("Выберите период", tab_sidebar_list,
                                                  index=int(st.session_state.selection_interval),
@@ -586,13 +503,9 @@ if selected_menu == "Интервалы":
         st.markdown(f'<h5 style="text-align: left; color: #4562a1;">{home_line_text}</h5>',
                     unsafe_allow_html=True)
         df_common = rolled_df
-        # if st.session_state.checked_method == "LSTM":
-        #     col_list = ['loss']
-        # else:
-        #     col_list = ['P']
         col_list = ['target_value']
         anomaly_interval = [0, len(df_common)]
-        fig_home = get_view_streamlit.home_plot(df_common, anomaly_interval, col_list, interval_list, config)
+        fig_home = get_view_streamlit.home_plot(df_common, anomaly_interval, col_list, interval_list)
         st.markdown("<h5 style='text-align: left; color: #4562a1;'>Найденные периоды</h5>",
                     unsafe_allow_html=True)
 
@@ -601,16 +514,11 @@ if selected_menu == "Интервалы":
             if st.session_state.selection_flag:
                 st.session_state.selection_flag = False
                 st.session_state.selection_interval = tab_list
-            # tab_show_name = [i for i in tab_name_list if i not in st.session_state.opened_tab[1:]]
-            # selected_interval = st.selectbox("Выберите период", tab_show_name,
-            #                                  key="intervals_select_box", label_visibility="visible")
             selected_interval = st.selectbox("Выберите период", tab_sidebar_list,
                                              key="intervals_select_box", label_visibility="visible")
             if (selected_interval != tab_name_list[0]) \
                     and (selected_interval != tab_name_list.index(selected_interval)) \
                     and (not st.session_state.selection_flag):
-                # if selected_interval not in st.session_state.opened_tab:
-                # st.session_state.opened_tab.append(selected_interval)
                 st.session_state.selection_interval = tab_name_list.index(selected_interval)
                 st.session_state.selection_flag = True
                 selected_interval_sidebar = st.session_state.selection_interval
@@ -902,7 +810,7 @@ if selected_menu == "Интервалы":
                                                        merged_interval_list, interval_list, tab_name_list,
                                                        WEB_APP_REPORTS, web_app_group, web_app_period_reports,
                                                        merged_top_list, LEFT_SPACE, RIGHT_SPACE,
-                                                       PLOT_FEATURES, DROP_LIST, dict_kks, config,
+                                                       PLOT_FEATURES, DROP_LIST, dict_kks,
                                                        home_line_text, tab_line_text)
         try:
             with open(f'{web_app_group}/common_report.pdf', "rb") as pdf_file:
@@ -929,13 +837,9 @@ if selected_menu == "Интервалы":
         st.markdown(f'<h6 style="text-align: left; color: #4562a1;">{tab_line_text}</h6>',
                     unsafe_allow_html=True)
         df_common = rolled_df
-        # if st.session_state.checked_method == "LSTM":
-        #     col_list = ['loss']
-        # if st.session_state.checked_method == "Potentials":
-        #     col_list = ['P']
         col_list = ['target_value']
         fig_tab = get_view_streamlit.tab_plot(idx, df_common, merged_interval_list, col_list, interval_list,
-                                              LEFT_SPACE, RIGHT_SPACE, config)
+                                              LEFT_SPACE, RIGHT_SPACE)
         st.markdown("<h6 style='text-align: left; color: #4562a1;'>Сигналы, внесшие наибольший вклад</h6>",
                     unsafe_allow_html=True)
 
@@ -984,14 +888,16 @@ if selected_menu == "Интервалы":
                                                                                                  PLOT_FEATURES,
                                                                                                  LEFT_SPACE,
                                                                                                  RIGHT_SPACE,
-                                                                                                 dict_kks, config)
+                                                                                                 dict_kks)
                 legend_of_sensors.append(legend_of_sensor)
                 palette_of_sensors.append(palette_of_sensor)
                 try:
                     os.mkdir(f'{web_app_period_reports}/{tab_dir_name}')
-                except Exception as e:
-                    print(e)
-                    logger.info('Reports dir exist!')
+                except OSError as e:
+                    if e.errno != errno.EEXIST:
+                        logger.error(e)
+                        st.write(f'Error has been occurred on create {web_app_period_reports}/{tab_dir_name}')
+                        st.stop()
                 fig_sensor.write_image(f'{web_app_period_reports}/{tab_dir_name}/'
                                        f'sensor_img_{str(idx)}_{str(jdx)}.png', engine="kaleido",
                                        width=1200, height=1000)
@@ -1010,12 +916,6 @@ if selected_menu == "Интервалы":
                                                    mime="application/octet-stream")
             if report_tab_button:
                 st.write("Новый отчет по периоду создан")
-        # with col_close_tab:
-        #     close_tab_button = st.button("Закрыть вкладку", key="close_tab_button_" + str(idx))
-        #     if close_tab_button:
-        #         st.session_state.opened_tab.remove(tab_name_list[idx])
-        #         st.session_state.selection_interval = 0
-        #         st.experimental_rerun()
 
     if report_sidebar_button:
         with st.sidebar:
@@ -1024,7 +924,7 @@ if selected_menu == "Интервалы":
                                                                 added_intervals, interval_list, progress_bar,
                                                                 web_app_group, web_app_period_reports,
                                                                 LEFT_SPACE, RIGHT_SPACE,
-                                                                PLOT_FEATURES, DROP_LIST, dict_kks, config,
+                                                                PLOT_FEATURES, DROP_LIST, dict_kks,
                                                                 home_line_text, tab_line_text)
         with open(f'{web_app_group}/common_report.pdf', "rb") as pdf_file:
             PDFbyte = pdf_file.read()
@@ -1041,15 +941,10 @@ if selected_menu == "Дополнения":
         if st.session_state.checked_method != METHODS[0]:
             st.session_state.checked_method = METHODS[0]
             st.experimental_rerun()
-        # selected_group_sidebar = st.selectbox("Группа", options=index_group,
-        #                                       key="group_select_box_sidebar", label_visibility="visible", index=0)
-        # if st.session_state.selected_group != selected_group_sidebar:
-        #     st.session_state.selected_group = selected_group_sidebar
         selected_group_sidebar = st.selectbox("Группа", options=selector_index_group,
                                               key="group_select_box_sidebar", label_visibility="visible", index=0)
         if st.session_state.selected_group != selected_group_sidebar[:selected_group_sidebar.find(' ')]:
             st.session_state.selected_group = selected_group_sidebar[:selected_group_sidebar.find(' ')]
-            # st.session_state.opened_tab = ["Главная"]
             st.session_state.selection_interval = 0
             st.experimental_rerun()
         logger.info(st.session_state.selected_group)

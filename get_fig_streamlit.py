@@ -3,7 +3,7 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
 
-def get_home_fig_potentials(df_common, anomaly_interval, interval_list, config):
+def get_home_fig_potentials(df_common, anomaly_interval, interval_list):
     col_list = ['target_value']
     fig = px.line(
         df_common.iloc[anomaly_interval[0]:anomaly_interval[-1]],
@@ -31,7 +31,7 @@ def get_home_fig_potentials(df_common, anomaly_interval, interval_list, config):
     return fig
 
 
-def get_tab_fig_potentials(df_common, merged_interval_list, interval_list, LEFT_SPACE, RIGHT_SPACE, config):
+def get_tab_fig_potentials(df_common, merged_interval_list, interval_list, LEFT_SPACE, RIGHT_SPACE):
     col_list = ['target_value']
     if merged_interval_list[0] > LEFT_SPACE:
         left_space = LEFT_SPACE
@@ -65,7 +65,7 @@ def get_tab_fig_potentials(df_common, merged_interval_list, interval_list, LEFT_
     return fig
 
 
-def get_sensor_fig_potentials(df_common, df_sensors, top, merged_interval_list, interval_list, LEFT_SPACE, RIGHT_SPACE, PLOT_FEATURES, config):
+def get_sensor_fig_potentials(df_common, df_sensors, top, merged_interval_list, interval_list, LEFT_SPACE, RIGHT_SPACE, PLOT_FEATURES):
     if top not in PLOT_FEATURES:
         col_sensors_list = [top] + PLOT_FEATURES
     else:
@@ -194,7 +194,7 @@ def get_sensor_fig_potentials(df_common, df_sensors, top, merged_interval_list, 
     return fig, legend_list, palette_list
 
 
-def get_another_sensor_fig_potentials(df_common, df_sensors, tops, merged_interval_list, interval_list, dict_kks, LEFT_SPACE, RIGHT_SPACE, PLOT_FEATURES, DROP_LIST, config):
+def get_another_sensor_fig_potentials(df_common, df_sensors, tops, merged_interval_list, interval_list, dict_kks, LEFT_SPACE, RIGHT_SPACE, PLOT_FEATURES, DROP_LIST):
     col_sensors_list = []
     for top in tops:
         if (top not in PLOT_FEATURES[:2]) and (top not in DROP_LIST):
