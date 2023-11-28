@@ -33,14 +33,24 @@ def get_home_fig_potentials(df_common, anomaly_interval, interval_list):
 
 def get_tab_fig_potentials(df_common, merged_interval_list, interval_list, LEFT_SPACE, RIGHT_SPACE):
     col_list = ['target_value']
-    if merged_interval_list[0] > LEFT_SPACE:
-        left_space = LEFT_SPACE
+
+    interval_len = merged_interval_list[-1] - merged_interval_list[0] + 1
+    if interval_len > LEFT_SPACE:
+        left_space = interval_len
     else:
-        left_space = 0
-    if merged_interval_list[-1] < (len(df_common) - RIGHT_SPACE):
-        right_space = RIGHT_SPACE
+        if merged_interval_list[0] > LEFT_SPACE:
+            left_space = LEFT_SPACE
+        else:
+            left_space = 0
+
+    if interval_len > RIGHT_SPACE:
+        right_space = interval_len
     else:
-        right_space = 0
+        if merged_interval_list[-1] < (len(df_common) - RIGHT_SPACE):
+            right_space = RIGHT_SPACE
+        else:
+            right_space = 0
+
     anomaly_tab_interval = [merged_interval_list[0] - left_space, merged_interval_list[-1] + right_space]
 
     fig = px.line(
@@ -74,14 +84,22 @@ def get_sensor_fig_potentials(df_common, df_sensors, top, merged_interval_list, 
             if plot_signal != top:
                 col_sensors_list.append(plot_signal)
 
-    if merged_interval_list[0] > LEFT_SPACE:
-        left_space = LEFT_SPACE
+    interval_len = merged_interval_list[-1] - merged_interval_list[0] + 1
+    if interval_len > LEFT_SPACE:
+        left_space = interval_len
     else:
-        left_space = 0
-    if merged_interval_list[-1] < (len(df_common) - RIGHT_SPACE):
-        right_space = RIGHT_SPACE
+        if merged_interval_list[0] > LEFT_SPACE:
+            left_space = LEFT_SPACE
+        else:
+            left_space = 0
+
+    if interval_len > RIGHT_SPACE:
+        right_space = interval_len
     else:
-        right_space = 0
+        if merged_interval_list[-1] < (len(df_common) - RIGHT_SPACE):
+            right_space = RIGHT_SPACE
+        else:
+            right_space = 0
     anomaly_sensors_interval = [merged_interval_list[0] - left_space, merged_interval_list[-1] + right_space]
 
     palette = px.colors.qualitative.Plotly
@@ -202,14 +220,23 @@ def get_another_sensor_fig_potentials(df_common, df_sensors, tops, merged_interv
     col_sensors_list.append(PLOT_FEATURES[0])
     col_sensors_list.append(PLOT_FEATURES[1])
 
-    if merged_interval_list[0] > LEFT_SPACE:
-        left_space = LEFT_SPACE
+    interval_len = merged_interval_list[-1] - merged_interval_list[0] + 1
+    if interval_len > LEFT_SPACE:
+        left_space = interval_len
     else:
-        left_space = 0
-    if merged_interval_list[-1] < (len(df_common) - RIGHT_SPACE):
-        right_space = RIGHT_SPACE
+        if merged_interval_list[0] > LEFT_SPACE:
+            left_space = LEFT_SPACE
+        else:
+            left_space = 0
+
+    if interval_len > RIGHT_SPACE:
+        right_space = interval_len
     else:
-        right_space = 0
+        if merged_interval_list[-1] < (len(df_common) - RIGHT_SPACE):
+            right_space = RIGHT_SPACE
+        else:
+            right_space = 0
+
     anomaly_sensors_interval = [merged_interval_list[0] - left_space, merged_interval_list[-1] + right_space]
 
     palette = px.colors.qualitative.Plotly

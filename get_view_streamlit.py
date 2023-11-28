@@ -43,15 +43,22 @@ def home_plot(df_common, anomaly_interval, col_list, interval_list):
 # отрисовка графика вероятности определенного периода
 @st.cache_data
 def tab_plot(idx, df_common, merged_interval_list, col_list, interval_list, LEFT_SPACE, RIGHT_SPACE):
+    interval_len = merged_interval_list[idx][-1] - merged_interval_list[idx][0] + 1
+    if interval_len > LEFT_SPACE:
+        left_space = interval_len
+    else:
+        if merged_interval_list[idx][0] > LEFT_SPACE:
+            left_space = LEFT_SPACE
+        else:
+            left_space = 0
 
-    if merged_interval_list[idx][0] > LEFT_SPACE:
-        left_space = LEFT_SPACE
+    if interval_len > RIGHT_SPACE:
+        right_space = interval_len
     else:
-        left_space = 0
-    if merged_interval_list[idx][-1] < (len(df_common) - RIGHT_SPACE):
-        right_space = RIGHT_SPACE
-    else:
-        right_space = 0
+        if merged_interval_list[idx][-1] < (len(df_common) - RIGHT_SPACE):
+            right_space = RIGHT_SPACE
+        else:
+            right_space = 0
     anomaly_tab_interval = [merged_interval_list[idx][0] - left_space, merged_interval_list[idx][-1] + right_space]
 
     fig = px.line(
@@ -89,14 +96,22 @@ def sensor_plot(idx, jdx, df_common, df_sensors, merged_interval_list, interval_
             if plot_signal != signal_checked_name_list[jdx]:
                 col_sensors_list.append(plot_signal)
 
-    if merged_interval_list[idx][0] > LEFT_SPACE:
-        left_space = LEFT_SPACE
+    interval_len = merged_interval_list[idx][-1] - merged_interval_list[idx][0] + 1
+    if interval_len > LEFT_SPACE:
+        left_space = interval_len
     else:
-        left_space = 0
-    if merged_interval_list[idx][-1] < (len(df_common) - RIGHT_SPACE):
-        right_space = RIGHT_SPACE
+        if merged_interval_list[idx][0] > LEFT_SPACE:
+            left_space = LEFT_SPACE
+        else:
+            left_space = 0
+
+    if interval_len > RIGHT_SPACE:
+        right_space = interval_len
     else:
-        right_space = 0
+        if merged_interval_list[idx][-1] < (len(df_common) - RIGHT_SPACE):
+            right_space = RIGHT_SPACE
+        else:
+            right_space = 0
     anomaly_sensors_interval = [merged_interval_list[idx][0] - left_space, merged_interval_list[idx][-1] + right_space]
 
     fig_container = st.empty()
