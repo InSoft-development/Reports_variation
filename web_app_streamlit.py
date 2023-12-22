@@ -14,6 +14,20 @@ import get_view_streamlit
 import get_pdf_report_streamlit
 import get_interval_streamlit
 
+
+def fill_zeros_with_last_value(df, count_next=288):
+    count = 0
+    for index, row in df.iterrows():
+        if row['target_value'] == 0:
+            if count == 0:
+                start_index = index
+                last_value = df.iloc[index-1]['target_value']
+            count += 1
+        if row['target_value'] != 0 and count != 0:
+            if count < count_next:
+                df.loc[start_index:index-1, 'target_value'] = last_value
+            count = 0
+
 # Конфиг страницы веб-приложения streamlit
 st.set_page_config(
     page_title="Web app",
@@ -310,8 +324,10 @@ except Exception as e:
 try:
     logger.info(f'Read_file: {CSV_ROLLED_NAME}')
     rolled_df = pd.read_csv(f'{CSV_ROLLED_NAME}')
-    rolled_df.fillna(method='ffill', inplace=True)
+    #rolled_df.fillna(method='ffill', inplace=True)
+    #rolled_df.fillna(0, inplace=True)
     rolled_df.fillna(value={"target_value": 0}, inplace=True)
+    fill_zeros_with_last_value(rolled_df)
     rolled_df.index = rolled_df['timestamp']
     rolled_df = rolled_df.drop(columns=['timestamp'])
 except Exception as e:

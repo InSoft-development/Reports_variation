@@ -4,6 +4,19 @@ import pandas as pd
 from loguru import logger
 
 
+def fill_zeros_with_last_value(df, count_next=288):
+    count = 0
+    for index, row in df.iterrows():
+        if row['target_value'] == 0:
+            if count == 0:
+                start_index = index
+                last_value = df.iloc[index-1]['target_value']
+            count += 1
+        if row['target_value'] != 0 and count != 0:
+            if count < count_next:
+                df.loc[start_index:index-1, 'target_value'] = last_value
+            count = 0
+
 def get_anomaly_interval_streamlit(loss, threshold_short, threshold_long,
                                    len_long, len_short,
                                    count_continue_short=10, count_continue_long=15):
@@ -107,8 +120,10 @@ def rebuilt_anomaly_interval_streamlit(csv_predict_path, csv_rolled_path, csv_da
                 time_df = pd.DataFrame()
                 time_df['timestamp'] = data_df['timestamp']
                 rolled_df = pd.merge(time_df, rolled_df, how='left', on='timestamp')
-            rolled_df.fillna(method='ffill', inplace=True)
+            #rolled_df.fillna(method='ffill', inplace=True)
+	    #rolled_df.fillna(0, inplace=True)
             rolled_df.fillna(value={"target_value": 0}, inplace=True)
+            fill_zeros_with_last_value(rolled_df)
 
             rolled_df.to_csv(csv_rolled_name, index=False)
             rolled_df.index = rolled_df['timestamp']
