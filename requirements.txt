@@ -5,3 +5,5 @@ streamlit~=1.19.0
 numpy~=1.23.5
 scipy~=1.9.0
 reportlab~=3.5.68
+extra-streamlit-components~=0.1.56
+streamlit_option_menu~=0.3.2
