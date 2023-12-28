@@ -105,7 +105,6 @@ python -m streamlit run web_app_streamlit.py  --server.port {указать но
 ├───web_app
 │   │   config_plot_SOCHI.json
 │   │   config_SOCHI.json
-│   │   default_interval_config.json
 │   │
 │   └───Reports
 │       ├───LSTM
@@ -117,6 +116,9 @@ python -m streamlit run web_app_streamlit.py  --server.port {указать но
 │       │   ├───group_{номер группы}
 │       │   │   │
 │       │   │   └───periods
+│
+├───uitls
+    └───default_interval_config.json
 ```
 
 - В папке `Data` лежат файлы, являющиеся исходными данными для отображения всех графиков: json файл KKS датчиков, csv файл с KKS датчиков и группами, файл со срезами, выходные файлы методов потенциалов и LSTM, фреймы со сглаженными вероятностями методов;
@@ -133,7 +135,8 @@ python -m streamlit run web_app_streamlit.py  --server.port {указать но
 - В папке `Data` разместить json файл KKS датчиков `sensors.json` и csv файл с KKS датчиков и группами `kks_with_groups.csv`;
 - В папках исходных данных `Data/LSTM` и `Data/Potentials` разместить по директориям `csv_loss, csv_predict, csv_rolled, json_interval` соответствующие выходные файлы методов `loss_{номер группы}.csv, predict_{номер группы}.csv, rolled_{номер группы}.csv, group_{номер группы}.json`;
 - В `Data/csv_data` разместить исходный для обоих методов csv файл со срезами `slices.csv`;
-- В `Data/web_app` положить конфигурационные файлы `config_SOCHI.json`, `config_plot_SOCHI.json` и `default_interval_config.json`.
+- В `Data/web_app` положить конфигурационные файлы `config_SOCHI.json`, `config_plot_SOCHI.json`;
+- В `utils/` положить конфигурационный файл `default_interval_config.json`
 
 Файлы `loss_{номер группы}.csv, predict_{номер группы}.csv, rolled_{номер группы}.csv, group_{номер группы}.json` и `slices.csv` при необходимости можно выкачать из таблиц онлайна методов с помощью скриптов, размещенных в директории `utils`. Для этого необходимо выполнить следующую последовательность команд:
 
