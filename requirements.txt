@@ -7,3 +7,4 @@ scipy~=1.9.0
 reportlab~=3.5.68
 extra-streamlit-components~=0.1.56
 streamlit_option_menu~=0.3.2
+kaleido~=0.2.1

@@ -22,7 +22,7 @@ def rolling_probability(df, roll_in_hours, number_of_samples):
 if __name__ == '__main__':
     logger.info("get_default_interval.py")
 
-    with open(f"default_interval_config.json", 'r', encoding='utf8') as j:
+    with open(f"..{os.sep}web_app{os.sep}default_interval_config.json", 'r', encoding='utf8') as j:
         default_interval_config = json.load(j)
 
     for method in METHODS:
