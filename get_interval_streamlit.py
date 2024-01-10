@@ -1,5 +1,7 @@
 import json
 import os
+import shutil
+import errno
 import pandas as pd
 from loguru import logger
 
@@ -16,6 +18,7 @@ def fill_zeros_with_last_value(df, count_next=288):
             if count < count_next:
                 df.loc[start_index:index-1, 'target_value'] = last_value
             count = 0
+
 
 def get_anomaly_interval_streamlit(loss, threshold_short, threshold_long,
                                    len_long, len_short,
@@ -81,7 +84,25 @@ def rolling_probability(df, roll_in_hours, number_of_samples):
     return df
 
 
-def rebuilt_anomaly_interval_streamlit(csv_predict_path, csv_rolled_path, csv_data_path,
+def clean_old_reports(method):
+    web_app_dir = f'web_app{os.sep}'
+    web_app_reports_dir = f'{web_app_dir}Reports{os.sep}'
+    web_app_reports = f'{web_app_reports_dir}{method}{os.sep}'
+    for group in sorted(os.listdir(f'{web_app_reports}')):
+        web_app_reports_group_periods = f'{web_app_reports}{group}{os.sep}'
+        logger.info(f"delete {web_app_reports_group_periods}")
+        shutil.rmtree(web_app_reports_group_periods)
+
+        try:
+            logger.info(f"create {web_app_reports_group_periods}")
+            os.mkdir(f'{web_app_reports_group_periods}')
+        except OSError as e:
+            if e.errno != errno.EEXIST:
+                logger.error(e)
+
+
+def rebuilt_anomaly_interval_streamlit(checked_method,
+                                       csv_predict_path, csv_rolled_path, csv_data_path,
                                        json_dir, csv_loss_path,
                                        roll_probability, number_of_samples,
                                        SHORT_THRESHOLD,
@@ -91,6 +112,7 @@ def rebuilt_anomaly_interval_streamlit(csv_predict_path, csv_rolled_path, csv_da
                                        LEN_LONG_ANOMALY,
                                        COUNT_CONTINUE_LONG,
                                        COUNT_TOP=3):
+    clean_old_reports(checked_method)
     # получение данных csv группы по вероятности аномалии
     for i, (csv, loss, rolled) in enumerate(zip(
                                             sorted(os.listdir(f'{csv_predict_path}')),
@@ -120,8 +142,8 @@ def rebuilt_anomaly_interval_streamlit(csv_predict_path, csv_rolled_path, csv_da
                 time_df = pd.DataFrame()
                 time_df['timestamp'] = data_df['timestamp']
                 rolled_df = pd.merge(time_df, rolled_df, how='left', on='timestamp')
-            #rolled_df.fillna(method='ffill', inplace=True)
-	    #rolled_df.fillna(0, inplace=True)
+            # rolled_df.fillna(method='ffill', inplace=True)
+            # rolled_df.fillna(0, inplace=True)
             rolled_df.fillna(value={"target_value": 0}, inplace=True)
             fill_zeros_with_last_value(rolled_df)
 
