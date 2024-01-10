@@ -16,20 +16,21 @@
 Для работы workflow на выкаченных данных из онлайна используются специальные скрипты, собранные в директории `utils`:
 - get_data.py: выкачка данных срезов, loss, вероятности по введенным датам начала и конца периода из таблиц онлайна методов потенциала и LSTM;
 - get_default_interval.py: первоначальное сглаживание и выделение интервалов по стандартному конфигу `default_interval_config.json`;
-- get_anomaly_interval.py: модуль с алгоритмами выделения аномальных интервалов.
+- get_anomaly_interval.py: модуль с алгоритмами выделения аномальных интервалов;
+- prepare_structure.py: скрипт создания структуры веб-приложения.
 
 ### Системные требования 
 
-- streamlit~=1.19.0;
-- pandas~=1.4.4;
-- plotly~=5.18.0;
-- loguru~=0.5.3;
-- numpy~=1.23.5;
-- reportlab~=3.5.68;
-- scipy~=1.9.0;
-- extra-streamlit-components~=0.1.56;
-- streamlit_option_menu~=0.3.2;
-- kaleido~=0.2.1.
+- streamlit>=1.19.0;
+- pandas>=1.4.4;
+- plotly>=5.18.0;
+- loguru>=0.5.3;
+- numpy>=1.23.5;
+- reportlab>=3.5.68;
+- scipy>=1.9.0;
+- extra-streamlit-components>=0.1.56;
+- streamlit_option_menu>=0.3.2;
+- kaleido>=0.2.1.
 
 
 ### Установка пакетов
@@ -137,6 +138,12 @@ python -m streamlit run web_app_streamlit.py  --server.port {указать но
 - В `Data/csv_data` разместить исходный для обоих методов csv файл со срезами `slices.csv`;
 - В `Data/web_app` положить конфигурационные файлы `config_SOCHI.json`, `config_plot_SOCHI.json`;
 - В `utils/` положить конфигурационный файл `default_interval_config.json`
+
+Быстро создать структуру директорий веб-приложения можно с помощью запуска скрипта `prepare_structure.py`, расположенного в `utils`. Для этого необходимо последовательно выполнить обязательно переход в директорию `utils` и выполнить скрипт `prepare_structure.py`:  
+```
+cd utils
+python prepare_structure.py
+```
 
 Файлы `loss_{номер группы}.csv, predict_{номер группы}.csv, rolled_{номер группы}.csv, group_{номер группы}.json` и `slices.csv` при необходимости можно выкачать из таблиц онлайна методов с помощью скриптов, размещенных в директории `utils`. Для этого необходимо выполнить следующую последовательность команд:
 
