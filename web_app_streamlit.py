@@ -484,7 +484,8 @@ if selected_menu == "Интервалы":
                 submitted_interval_detection = st.form_submit_button("Запустить выделение интервалов")
                 if submitted_interval_detection:
                     st.write("Выделение интервалов")
-                    get_interval_streamlit.rebuilt_anomaly_interval_streamlit(CSV_PREDICT, CSV_ROLLED, CSV_DATA_NAME,
+                    get_interval_streamlit.rebuilt_anomaly_interval_streamlit(st.session_state.checked_method,
+                                                                              CSV_PREDICT, CSV_ROLLED, CSV_DATA_NAME,
                                                                               JSON_DIR, CSV_LOSS,
                                                                               roll_probability,
                                                                               NUMBER_OF_SAMPLES,

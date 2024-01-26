@@ -16,6 +16,7 @@ def get_anomaly_interval(loss, threshold_short, threshold_long, len_long, len_sh
         i += 1
         if val > threshold_long:
             loss_interval.append(val)
+            count = 0
         else:
             count += 1
             loss_interval.append(val)
@@ -36,6 +37,7 @@ def get_anomaly_interval(loss, threshold_short, threshold_long, len_long, len_sh
         i += 1
         if val > threshold_short:
             loss_interval.append(val)
+            count = 0
         else:
             count += 1
             loss_interval.append(val)

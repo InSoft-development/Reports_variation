@@ -96,6 +96,7 @@ if __name__ == '__main__':
         df_slice = client.query_df(slice_query)
         df_slice.drop(columns=['model_timestamp'], inplace=True)
         # df_slice['timestamp'] = pd.to_datetime(df_slice['timestamp']).dt.tz_localize(None)
+        df_slice['timestamp'] = df_slice['timestamp'].values.astype('datetime64[s]')
         df_slice.to_csv(f"csv_data{os.sep}slices.csv")
 
         # Количество групп
@@ -120,6 +121,7 @@ if __name__ == '__main__':
                     logger.info(loss_query)
 
                     df_loss = client.query_df(loss_query)
+                    df_loss['timestamp'] = df_loss['timestamp'].values.astype('datetime64[s]')
                     df_loss.to_csv(f"{method}{os.sep}csv_loss{os.sep}loss_{group}.csv", index=False)
 
                     # Получение из таблицы БД предсказаний для группы
@@ -134,6 +136,7 @@ if __name__ == '__main__':
                     df_predict = pd.DataFrame()
                     df_predict['target_value'] = df_db_predict['probability']
                     df_predict['timestamp'] = df_db_predict['timestamp']
+                    df_predict['timestamp'] = df_predict['timestamp'].values.astype('datetime64[s]')
 
                     df_predict.to_csv(f"{method}{os.sep}csv_predict{os.sep}predict_{group}.csv", index=False)
 
@@ -161,22 +164,3 @@ if __name__ == '__main__':
     finally:
         client.close()
         logger.info("disconnected")
-
-
-    # with open("config_SOCHI.json", 'r', encoding='utf8') as j:
-    #     config_json = json.load(j)
-    # print("config SOCHI")
-    # with open(f"{DATA_DIR}{os.sep}{config_json['paths']['files']['json_sensors']}", 'r', encoding='utf8') as f:
-    #     json_dict = json.load(f)
-    #
-    # index_group = [list(x.keys())[0] for x in json_dict["groups"]]
-    # if index_group[0] == '0':
-    #     index_group.remove('0')
-    # for group in index_group:
-    #     path_to_probability = f"{DATA_DIR}{os.sep}{group}{os.sep}" \
-    #                           f"{config_json['paths']['files']['probability_csv']}{group}.csv"
-    #     path_to_potentials = f"{DATA_DIR}{os.sep}{group}{os.sep}" \
-    #                          f"{config_json['paths']['files']['potentials_csv']}{group}.csv"
-    #     path_to_anomaly_time = f"{DATA_DIR}{os.sep}{group}{os.sep}" \
-    #                            f"{config_json['paths']['files']['anomaly_time_prob']}{group}.csv"
-    #     calculate_anomaly_time_all_df(path_to_probability, path_to_anomaly_time)

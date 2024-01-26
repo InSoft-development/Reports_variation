@@ -21,13 +21,13 @@ styles = getSampleStyleSheet()  # Стили для отчетов по умол
 
 # форматирование текста отчета Times New Roman
 def StringGuy(text):
-    return f'<font name="TNR">{text}</font>'
+    return f'<font name="DVS">{text}</font>'
 
 
 # форматирование текста легенды
 def StringGuy_legend(text, color):
-    return f'<font name="TNR">{text[:text.index(":")]}' \
-           f'</font><font name="TNR" color={color}>{text[text.index(":"):]}</font>'
+    return f'<font name="DVS">{text[:text.index(":")]}' \
+           f'</font><font name="DVS" color={color}>{text[text.index(":"):]}</font>'
 
 
 # форматирование обычного абзаца
@@ -54,7 +54,7 @@ def get_common_report(fig_home, df_common, data_df, merged_interval_list, interv
     subheadline_style = styles["Heading2"]
     subheadline_style.textColor = "#4562a1"
 
-    pdfmetrics.registerFont(TTFont('TNR', 'times.ttf', 'UTF-8'))
+    pdfmetrics.registerFont(TTFont('DVS', 'DejaVuSerif.ttf', 'UTF-8'))
     if st.session_state.PDF_check_radio_button == "Альбомная":
         doc = SimpleDocTemplate(f'{web_app_group}/common_report.pdf',
                                 pagesize=landscape(letter), rightMargin=72, leftMargin=72, topMargin=72,
@@ -223,7 +223,7 @@ def get_common_from_sidebar_report(anomaly_time_df, data_df,
     subheadline_style = styles["Heading2"]
     subheadline_style.textColor = "#4562a1"
 
-    pdfmetrics.registerFont(TTFont('TNR', 'times.ttf', 'UTF-8'))
+    pdfmetrics.registerFont(TTFont('DVS', 'DejaVuSerif.ttf', 'UTF-8'))
     if st.session_state.PDF_check_radio_button == "Альбомная":
         doc = SimpleDocTemplate(f'{web_app_group}/common_report.pdf',
                                 pagesize=landscape(letter), rightMargin=72, leftMargin=72, topMargin=72,
@@ -361,7 +361,7 @@ def get_period_report(idx, tab_name_list, tab_dir_name, web_app_period_reports,
     subheadline_style = styles["Heading2"]
     subheadline_style.textColor = "#4562a1"
 
-    pdfmetrics.registerFont(TTFont('TNR', 'times.ttf', 'UTF-8'))
+    pdfmetrics.registerFont(TTFont('DVS', 'DejaVuSerif.ttf', 'UTF-8'))
     if st.session_state.PDF_check_radio_button == "Альбомная":
         doc = SimpleDocTemplate(f'{web_app_period_reports}/report_{tab_dir_name}.pdf',
                                 pagesize=landscape(letter), rightMargin=72, leftMargin=72, topMargin=72,
