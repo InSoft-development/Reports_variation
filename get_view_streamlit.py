@@ -45,7 +45,7 @@ def home_plot(df_common, anomaly_interval, col_list, interval_list):
 def tab_plot(idx, df_common, merged_interval_list, col_list, interval_list, LEFT_SPACE, RIGHT_SPACE):
     interval_len = merged_interval_list[idx][-1] - merged_interval_list[idx][0] + 1
     
-    if (interval_len > LEFT_SPACE) and (merged_interval_list[idx][0] > LEFT_SPACE):
+    if (interval_len > LEFT_SPACE) and (merged_interval_list[idx][0] > LEFT_SPACE) and (merged_interval_list[idx][0] > interval_len):
         left_space = interval_len
     else:
         if merged_interval_list[idx][0] > LEFT_SPACE:
@@ -53,7 +53,7 @@ def tab_plot(idx, df_common, merged_interval_list, col_list, interval_list, LEFT
         else:
             left_space = 0
 
-    if (interval_len > RIGHT_SPACE) and (merged_interval_list[idx][-1] < (len(df_common) - RIGHT_SPACE)):
+    if (interval_len > RIGHT_SPACE) and (merged_interval_list[idx][-1] < (len(df_common) - RIGHT_SPACE)) and ((merged_interval_list[idx][-1] + interval_len) < len(df_common)):
         right_space = interval_len
     else:
         if merged_interval_list[idx][-1] < (len(df_common) - RIGHT_SPACE):
@@ -99,7 +99,7 @@ def sensor_plot(idx, jdx, df_common, df_sensors, merged_interval_list, interval_
 
     interval_len = merged_interval_list[idx][-1] - merged_interval_list[idx][0] + 1
     
-    if (interval_len > LEFT_SPACE) and (merged_interval_list[idx][0] > LEFT_SPACE):
+    if (interval_len > LEFT_SPACE) and (merged_interval_list[idx][0] > LEFT_SPACE) and (merged_interval_list[idx][0] > interval_len):
         left_space = interval_len
     else:
         if merged_interval_list[idx][0] > LEFT_SPACE:
@@ -107,7 +107,7 @@ def sensor_plot(idx, jdx, df_common, df_sensors, merged_interval_list, interval_
         else:
             left_space = 0
 
-    if (interval_len > RIGHT_SPACE) and (merged_interval_list[idx][-1] < (len(df_common) - RIGHT_SPACE)):
+    if (interval_len > RIGHT_SPACE) and (merged_interval_list[idx][-1] < (len(df_common) - RIGHT_SPACE))  and ((merged_interval_list[idx][-1] + interval_len) < len(df_common)):
         right_space = interval_len
     else:
         if merged_interval_list[idx][-1] < (len(df_common) - RIGHT_SPACE):

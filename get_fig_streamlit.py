@@ -35,7 +35,7 @@ def get_tab_fig_potentials(df_common, merged_interval_list, interval_list, LEFT_
     col_list = ['target_value']
 
     interval_len = merged_interval_list[-1] - merged_interval_list[0] + 1
-    if (interval_len > LEFT_SPACE) and (merged_interval_list[0] > LEFT_SPACE):
+    if (interval_len > LEFT_SPACE) and (merged_interval_list[0] > LEFT_SPACE) and (merged_interval_list[0] > interval_len):
         left_space = interval_len
     else:
         if merged_interval_list[0] > LEFT_SPACE:
@@ -43,7 +43,7 @@ def get_tab_fig_potentials(df_common, merged_interval_list, interval_list, LEFT_
         else:
             left_space = 0
 
-    if (interval_len > RIGHT_SPACE) and (merged_interval_list[-1] < (len(df_common) - RIGHT_SPACE)):
+    if (interval_len > RIGHT_SPACE) and (merged_interval_list[-1] < (len(df_common) - RIGHT_SPACE))  and ((merged_interval_list[-1] + interval_len) < len(df_common)):
         right_space = interval_len
     else:
         if merged_interval_list[-1] < (len(df_common) - RIGHT_SPACE):
@@ -85,7 +85,7 @@ def get_sensor_fig_potentials(df_common, df_sensors, top, merged_interval_list, 
                 col_sensors_list.append(plot_signal)
 
     interval_len = merged_interval_list[-1] - merged_interval_list[0] + 1
-    if (interval_len > LEFT_SPACE) and (merged_interval_list[0] > LEFT_SPACE):
+    if (interval_len > LEFT_SPACE) and (merged_interval_list[0] > LEFT_SPACE) and (merged_interval_list[0] > interval_len):
         left_space = interval_len
     else:
         if merged_interval_list[0] > LEFT_SPACE:
@@ -93,7 +93,7 @@ def get_sensor_fig_potentials(df_common, df_sensors, top, merged_interval_list, 
         else:
             left_space = 0
 
-    if (interval_len > RIGHT_SPACE) and (merged_interval_list[-1] < (len(df_common) - RIGHT_SPACE)):
+    if (interval_len > RIGHT_SPACE) and (merged_interval_list[-1] < (len(df_common) - RIGHT_SPACE)) and ((merged_interval_list[-1] + interval_len) < len(df_common)):
         right_space = interval_len
     else:
         if merged_interval_list[-1] < (len(df_common) - RIGHT_SPACE):
@@ -221,7 +221,7 @@ def get_another_sensor_fig_potentials(df_common, df_sensors, tops, merged_interv
     col_sensors_list.append(PLOT_FEATURES[1])
 
     interval_len = merged_interval_list[-1] - merged_interval_list[0] + 1
-    if (interval_len > LEFT_SPACE) and (merged_interval_list[0] > LEFT_SPACE):
+    if (interval_len > LEFT_SPACE) and (merged_interval_list[0] > LEFT_SPACE) and (merged_interval_list[0] > interval_len):
         left_space = interval_len
     else:
         if merged_interval_list[0] > LEFT_SPACE:
@@ -229,7 +229,7 @@ def get_another_sensor_fig_potentials(df_common, df_sensors, tops, merged_interv
         else:
             left_space = 0
 
-    if (interval_len > RIGHT_SPACE) and (merged_interval_list[-1] < (len(df_common) - RIGHT_SPACE)):
+    if (interval_len > RIGHT_SPACE) and (merged_interval_list[-1] < (len(df_common) - RIGHT_SPACE))  and ((merged_interval_list[-1] + interval_len) < len(df_common)):
         right_space = interval_len
     else:
         if merged_interval_list[-1] < (len(df_common) - RIGHT_SPACE):
