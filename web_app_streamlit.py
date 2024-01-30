@@ -1,8 +1,9 @@
 import argparse
 import datetime
+import errno
 import json
 import os
-import errno
+from dateutil import parser as pars
 
 import extra_streamlit_components as stx
 import pandas as pd
@@ -10,9 +11,9 @@ import streamlit as st
 from loguru import logger
 from streamlit_option_menu import option_menu
 
-import get_view_streamlit
-import get_pdf_report_streamlit
 import get_interval_streamlit
+import get_pdf_report_streamlit
+import get_view_streamlit
 
 
 def fill_zeros_with_last_value(df, count_next=288):
@@ -47,7 +48,14 @@ st.markdown(hide_st_style, unsafe_allow_html=True)
 
 # вычисление средних для составления списка датчиков, внесших max вклад
 def mean_index(data, sensors, top_count=3):
-    mean_loss = data[sensors].mean().sort_values(ascending=False).index[:top_count].to_list()
+    # отбрасываем лишние датчики, перечисленные в config_plot_SOCHI
+    data_temp = data.copy(deep=True)
+    for sensor in DROP_LIST:
+        if sensor in data_temp.columns:
+            data_temp.drop(columns=sensor, inplace=True)
+            sensors.remove(sensor)
+            logger.info(f"drop bad sensor: {sensor} from {CSV_LOSS_NAME} dataframe")
+    mean_loss = data_temp[sensors].mean().sort_values(ascending=False).index[:top_count].to_list()
     return mean_loss
 
 
@@ -337,6 +345,7 @@ except Exception as e:
 try:
     logger.info(f'Read_file: {CSV_LOSS_NAME}')
     loss_df = pd.read_csv(f'{CSV_LOSS_NAME}')
+    loss_df.fillna(0, inplace=True)
     loss_df.index = loss_df['timestamp']
     loss_df = loss_df.drop(columns=['timestamp'])
 except Exception as e:
@@ -489,6 +498,7 @@ if selected_menu == "Интервалы":
                                                                               JSON_DIR, CSV_LOSS,
                                                                               roll_probability,
                                                                               NUMBER_OF_SAMPLES,
+                                                                              DROP_LIST,
                                                                               short_threshold,
                                                                               len_short_anomaly,
                                                                               count_continue_short,
@@ -553,7 +563,8 @@ if selected_menu == "Интервалы":
                                           type="default", placeholder="ДД/ММ/ГГ ЧЧ:ММ:СС")
                 try:
                     if down_time != "":
-                        datetime_down_time = datetime.datetime.strptime(down_time, '%d/%m/%y %H:%M:%S')
+                        # datetime_down_time = datetime.datetime.strptime(down_time, '%d/%m/%y %H:%M:%S')
+                        datetime_down_time = pars.parse(down_time, dayfirst=True, default=datetime.datetime(1978, 1, 1, 0, 0))
                         flag_down_time = True
                     else:
                         st.error("Введите начало периода")
@@ -564,7 +575,8 @@ if selected_menu == "Интервалы":
                                         type="default", placeholder="ДД/ММ/ГГ ЧЧ:ММ:СС")
                 try:
                     if up_time != "":
-                        datetime_up_time = datetime.datetime.strptime(up_time, '%d/%m/%y %H:%M:%S')
+                        # datetime_up_time = datetime.datetime.strptime(up_time, '%d/%m/%y %H:%M:%S')
+                        datetime_up_time = pars.parse(up_time, dayfirst=True, default=datetime.datetime(1978, 1, 1, 0, 0))
                         flag_up_time = True
                     else:
                         st.error("Введите конец периода")
@@ -578,6 +590,26 @@ if selected_menu == "Интервалы":
                     st.session_state.selection_flag = False
                     st.session_state.selection_interval = 0
                     try:
+                        if datetime_down_time not in df_common.index.tolist():
+                            logger.info(datetime_down_time)
+                            timestamp_down_time = datetime_down_time.timestamp()
+                            datetime_down_time = pars.parse(
+                                min(df_common.index, key=lambda x: abs(pars.parse(x).timestamp() - timestamp_down_time)))
+                            logger.info(datetime_down_time)
+                            with down_border:
+                                st.info(f"Начало периода было округлено до "
+                                        f"{datetime_down_time.strftime('%d/%m/%y %H:%M:%S')}")
+
+                        if datetime_up_time not in df_common.index.tolist():
+                            logger.info(datetime_up_time)
+                            timestamp_up_time = datetime_up_time.timestamp()
+                            datetime_up_time = pars.parse(
+                                min(df_common.index, key=lambda x: abs(pars.parse(x).timestamp() - timestamp_up_time)))
+                            logger.info(datetime_up_time)
+                            with up_border:
+                                st.info(f"Конец периода был округлен до "
+                                        f"{datetime_up_time.strftime('%d/%m/%y %H:%M:%S')}")
+
                         datetime_down_time_index = df_common.index.tolist().index(
                             datetime_down_time.strftime("%Y-%m-%d %H:%M:%S"))
                         datetime_up_time_index = df_common.index.tolist().index(
@@ -589,7 +621,7 @@ if selected_menu == "Интервалы":
                             interval_begin_index = datetime_down_time_index
                             interval_end_index = datetime_up_time_index
                             top_T = mean_index(loss_df[interval_begin_index:interval_end_index], group_sensors)
-                            logger.error(loss_df[interval_begin_index:interval_end_index])
+                            logger.info(loss_df[interval_begin_index:interval_end_index])
                             dictionary = {
                                 "time": [str(datetime.datetime.strftime(datetime_down_time,
                                                                         "%Y-%m-%d %H:%M:%S")),
@@ -619,7 +651,7 @@ if selected_menu == "Интервалы":
                                 st.error(msg)
                                 st.stop()
 
-                            if not added:
+                            if (not added) and (dictionary not in group_sensors):
                                 added = []
                                 added.append(dictionary)
                                 try:
@@ -725,7 +757,9 @@ if selected_menu == "Интервалы":
                                           label_visibility="collapsed", disabled=False)
                 try:
                     if down_edit != "":
-                        datetime_down_edit = datetime.datetime.strptime(down_edit, '%d/%m/%y %H:%M:%S')
+                        # datetime_down_edit = datetime.datetime.strptime(down_edit, '%d/%m/%y %H:%M:%S')
+                        datetime_down_edit = pars.parse(down_edit, dayfirst=True,
+                                                        default=datetime.datetime(1978, 1, 1, 0, 0))
                         flag_down_edit = True
                     else:
                         col2.error("Введите начало периода")
@@ -734,7 +768,9 @@ if selected_menu == "Интервалы":
 
                 try:
                     if up_edit != "":
-                        datetime_up_edit = datetime.datetime.strptime(up_edit, '%d/%m/%y %H:%M:%S')
+                        # datetime_up_edit = datetime.datetime.strptime(up_edit, '%d/%m/%y %H:%M:%S')
+                        datetime_up_edit = pars.parse(up_edit, dayfirst=True,
+                                                      default=datetime.datetime(1978, 1, 1, 0, 0))
                         flag_up_edit = True
                     else:
                         col3.error("Введите начало периода")
@@ -743,6 +779,26 @@ if selected_menu == "Интервалы":
 
                 if flag_down_edit and flag_up_edit:
                     try:
+                        if datetime_down_edit not in df_common.index.tolist():
+                            logger.info(datetime_down_edit)
+                            timestamp_down_edit = datetime_down_edit.timestamp()
+                            datetime_down_edit = pars.parse(
+                                min(df_common.index, key=lambda x: abs(pars.parse(x).timestamp() - timestamp_down_edit)))
+                            logger.info(datetime_down_edit)
+                            with col2:
+                                st.info(f"Начало периода было округлено до "
+                                        f"{datetime_down_edit.strftime('%d/%m/%y %H:%M:%S')}")
+
+                        if datetime_up_edit not in df_common.index.tolist():
+                            logger.info(datetime_up_edit)
+                            timestamp_up_edit = datetime_up_edit.timestamp()
+                            datetime_up_edit = pars.parse(
+                                min(df_common.index, key=lambda x: abs(pars.parse(x).timestamp() - timestamp_up_edit)))
+                            logger.info(datetime_up_edit)
+                            with col3:
+                                st.info(f"Конец периода был округлен до "
+                                        f"{datetime_up_edit.strftime('%d/%m/%y %H:%M:%S')}")
+
                         datetime_down_edit_index = df_common.index.tolist().index(
                             datetime_down_edit.strftime("%Y-%m-%d %H:%M:%S"))
                         datetime_up_edit_index = df_common.index.tolist().index(

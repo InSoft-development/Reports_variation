@@ -105,6 +105,7 @@ def rebuilt_anomaly_interval_streamlit(checked_method,
                                        csv_predict_path, csv_rolled_path, csv_data_path,
                                        json_dir, csv_loss_path,
                                        roll_probability, number_of_samples,
+                                       drop_sensors,
                                        SHORT_THRESHOLD,
                                        LEN_SHORT_ANOMALY,
                                        COUNT_CONTINUE_SHORT,
@@ -164,6 +165,13 @@ def rebuilt_anomaly_interval_streamlit(checked_method,
                                                                      len_short=LEN_SHORT_ANOMALY,
                                                                      count_continue_short=COUNT_CONTINUE_SHORT,
                                                                      count_continue_long=COUNT_CONTINUE_LONG)
+
+            # отбрасываем лишние датчики, перечисленные в config_plot_SOCHI
+            for sensor in drop_sensors:
+                if sensor in loss_df.columns:
+                    loss_df.drop(columns=sensor, inplace=True)
+                    logger.info(f"drop bad sensor: {sensor} from {csv_loss_name} dataframe")
+
             for j in idx_list:
                 top_list = loss_df[j[0]:j[1]].mean().sort_values(ascending=False).index[:COUNT_TOP].to_list()
                 report_dict = {
