@@ -504,7 +504,8 @@ if selected_menu == "Интервалы":
                                                                               count_continue_short,
                                                                               long_threshold,
                                                                               len_long_anomaly,
-                                                                              count_continue_long)
+                                                                              count_continue_long,
+                                                                              config)
                     st.experimental_rerun()
         report_sidebar_button = st.button("PDF", key="report_siderbar_button")
 

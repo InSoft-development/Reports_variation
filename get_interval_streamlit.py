@@ -21,7 +21,7 @@ def fill_zeros_with_last_value(df, count_next=288):
 
 
 def get_anomaly_interval_streamlit(loss, threshold_short, threshold_long,
-                                   len_long, len_short,
+                                   len_long, len_short, power, power_limit,
                                    count_continue_short=10, count_continue_long=15):
     long_interval_list = []
     short_interval_list = []
@@ -32,8 +32,9 @@ def get_anomaly_interval_streamlit(loss, threshold_short, threshold_long,
     short_idx_list = []
     sum_anomaly = 0
     for val in loss:
+
         i += 1
-        if val > threshold_long:
+        if val > threshold_long and check_power(power, i, power_limit):
             loss_interval.append(val)
             count = 0
         else:
@@ -60,7 +61,7 @@ def get_anomaly_interval_streamlit(loss, threshold_short, threshold_long,
             loss_interval.append(val)
             if count > count_continue_short:
                 if len(loss_interval) > len_short:
-                 isInLong = any(start<=i-len(loss_interval)<end for start,end in long_idx_list)
+                 isInLong = any(start <= i-len(loss_interval) < end for start, end in long_idx_list)
                  if not isInLong:
                     short_interval_list.append(loss_interval)
                     if i - len(loss_interval) > 0:
@@ -101,6 +102,10 @@ def clean_old_reports(method):
                 logger.error(e)
 
 
+def check_power(power, index, power_limit, left_power_shift=15, right_power_shift=15):
+    return any(val < power_limit for val in power[index-left_power_shift:right_power_shift+15])
+
+
 def rebuilt_anomaly_interval_streamlit(checked_method,
                                        csv_predict_path, csv_rolled_path, csv_data_path,
                                        json_dir, csv_loss_path,
@@ -112,6 +117,7 @@ def rebuilt_anomaly_interval_streamlit(checked_method,
                                        LONG_THRESHOLD,
                                        LEN_LONG_ANOMALY,
                                        COUNT_CONTINUE_LONG,
+                                       config,
                                        COUNT_TOP=3):
     clean_old_reports(checked_method)
     # получение данных csv группы по вероятности аномалии
@@ -158,13 +164,27 @@ def rebuilt_anomaly_interval_streamlit(checked_method,
 
             short_treshold = SHORT_THRESHOLD
             long_treshold = LONG_THRESHOLD
+            # interval_list, idx_list = get_anomaly_interval_streamlit(rolled_df['target_value'],
+            #                                                          threshold_short=short_treshold,
+            #                                                          threshold_long=long_treshold,
+            #                                                          len_long=LEN_LONG_ANOMALY,
+            #                                                          len_short=LEN_SHORT_ANOMALY,
+            #                                                          count_continue_short=COUNT_CONTINUE_SHORT,
+            #                                                          count_continue_long=COUNT_CONTINUE_LONG)
+
+            power = data_df
+            POWER_LIMIT = config["model"]["N"]
+            POWER_INDEX = config["model"]["approx_sensors"][-1]
+
             interval_list, idx_list = get_anomaly_interval_streamlit(rolled_df['target_value'],
-                                                                     threshold_short=short_treshold,
-                                                                     threshold_long=long_treshold,
+                                                                     threshold_short=SHORT_THRESHOLD,
+                                                                     threshold_long=LONG_THRESHOLD,
                                                                      len_long=LEN_LONG_ANOMALY,
                                                                      len_short=LEN_SHORT_ANOMALY,
                                                                      count_continue_short=COUNT_CONTINUE_SHORT,
-                                                                     count_continue_long=COUNT_CONTINUE_LONG)
+                                                                     count_continue_long=COUNT_CONTINUE_LONG,
+                                                                     power=power[POWER_INDEX],
+                                                                     power_limit=POWER_LIMIT)
 
             # отбрасываем лишние датчики, перечисленные в config_plot_SOCHI
             for sensor in drop_sensors:
