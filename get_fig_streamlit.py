@@ -116,7 +116,7 @@ def get_sensor_fig_potentials(df_common, df_sensors, top, merged_interval_list, 
         x=df_sensors[legend_list[0]].iloc[
           anomaly_sensors_interval[0]:anomaly_sensors_interval[-1]].index.to_list(),
         y=df_sensors[legend_list[0]].iloc[anomaly_sensors_interval[0]:anomaly_sensors_interval[-1]].to_list(),
-        name="yaxis data", line={"color": palette_list[0], "width": 2}
+        name="yaxis data", line={"color": palette_list[0], "width": 3.5}
     ))
     fig.update_layout(
         #xaxis=dict(domain=[0, 0.7]),
@@ -253,7 +253,7 @@ def get_another_sensor_fig_potentials(df_common, df_sensors, tops, merged_interv
         x=df_sensors[legend_list[0]].iloc[
           anomaly_sensors_interval[0]:anomaly_sensors_interval[-1]].index.to_list(),
         y=df_sensors[legend_list[0]].iloc[anomaly_sensors_interval[0]:anomaly_sensors_interval[-1]].to_list(),
-        name="yaxis data", line={"color": palette_list[0], "width": 2}
+        name="yaxis data", line={"color": palette_list[0], "width": 3.5}
     ))
     fig.update_layout(
         yaxis=dict(

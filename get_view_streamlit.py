@@ -163,7 +163,7 @@ def sensor_plot(idx, jdx, df_common, df_sensors, merged_interval_list, interval_
             x=df_sensors[legend_list[0]].iloc[
               anomaly_sensors_interval[0]:anomaly_sensors_interval[-1]].index.to_list(),
             y=df_sensors[legend_list[0]].iloc[anomaly_sensors_interval[0]:anomaly_sensors_interval[-1]].to_list(),
-            name="yaxis data", line={"color": palette_list[0], "width": 2}
+            name="yaxis data", line={"color": palette_list[0], "width": 3.5}
         ))
         fig.update_layout(
             yaxis=dict(

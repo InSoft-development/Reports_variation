@@ -44,7 +44,7 @@ def get_common_report(fig_home, df_common, data_df, merged_interval_list, interv
                       WEB_APP_REPORTS, web_app_group, web_app_period_reports,  merged_top_list,
                       LEFT_SPACE, RIGHT_SPACE, PLOT_FEATURES, DROP_LIST, dict_kks, home_text, tab_text):
     progress_report_bar = st.progress(value=0)
-    fig_home.write_image(f'{WEB_APP_REPORTS}/home_img.png', engine="kaleido", width=900, height=800)
+    fig_home.write_image(f'{web_app_group}/home_img.png', engine="kaleido", width=900, height=800)
 
     headline_style = styles["Heading1"]
     headline_style.alignment = TA_CENTER
@@ -73,7 +73,7 @@ def get_common_report(fig_home, df_common, data_df, merged_interval_list, interv
     Story.append(ParagGuy(home_text, subheadline_style))
     Story.append(Spacer(1, 12))
 
-    path_tab_img = f'{WEB_APP_REPORTS}/home_img.png'
+    path_tab_img = f'{web_app_group}/home_img.png'
     im = Image(path_tab_img, 8 * inch * scale, 4 * inch * scale)
     Story.append(im)
 
