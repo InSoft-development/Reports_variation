@@ -194,11 +194,13 @@ def rebuilt_anomaly_interval_streamlit(checked_method,
 
             for j in idx_list:
                 top_list = loss_df[j[0]:j[1]].mean().sort_values(ascending=False).index[:COUNT_TOP].to_list()
+                mean_measurement = list(loss_df[j[0]:j[1]].mean().sort_values(ascending=False).values[:COUNT_TOP])
                 report_dict = {
                     "time": (str(rolled_df.index[j[0]]), str(rolled_df.index[j[1]])),
                     "len": j[1] - j[0],
                     "index": j,
-                    "top_sensors": top_list
+                    "top_sensors": top_list,
+                    "measurement": mean_measurement
                 }
                 dict_list.append(report_dict)
 

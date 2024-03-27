@@ -56,7 +56,8 @@ def mean_index(data, sensors, top_count=3):
             sensors.remove(sensor)
             logger.info(f"drop bad sensor: {sensor} from {CSV_LOSS_NAME} dataframe")
     mean_loss = data_temp[sensors].mean().sort_values(ascending=False).index[:top_count].to_list()
-    return mean_loss
+    mean_measurement = list(data_temp[sensors].mean().sort_values(ascending=False).values[:top_count])
+    return mean_loss, mean_measurement
 
 
 # сортировка добавленных периодов
@@ -123,14 +124,19 @@ if ("LEFT_SPACE" not in st.session_state) or ("RIGHT_SPACE" not in st.session_st
     st.session_state.LEFT_SPACE = 1000
     st.session_state.RIGHT_SPACE = 1000
 
+# Сглаживагие
 if "roll" not in st.session_state:
     st.session_state.roll = 4
+
+if "top" not in st.session_state:
+    st.session_state.top = 3
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--station', type=str, default='')
 opt = parser.parse_args()
 
 DATA_DIR = f'Data/'
+UTILS_DIR = f'utils/'
 WEB_APP_DIR = f'web_app/'
 WEB_APP_REPORTS_DIR = f'{WEB_APP_DIR}/Reports/'
 WEB_APP_REPORTS = f'{WEB_APP_REPORTS_DIR}{st.session_state.checked_method}/'
@@ -245,6 +251,16 @@ try:
 except FileNotFoundError as e:
     msg = f'The file {WEB_APP_DIR}config_{opt.station}.json hasn\'t found. Please add file ' \
           f'{WEB_APP_DIR}config_{opt.station}.json'
+    logger.error(e)
+    st.error(msg)
+    st.stop()
+
+try:
+    with open(f'{UTILS_DIR}default_interval_config.json', 'r', encoding='utf8') as j:
+        default_interval_config = json.load(j)
+except FileNotFoundError as e:
+    msg = f'The file {UTILS_DIR}default_interval_config.json hasn\'t found. Please add file ' \
+          f'{UTILS_DIR}default_interval_config.json'
     logger.error(e)
     st.error(msg)
     st.stop()
@@ -467,28 +483,35 @@ if selected_menu == "Интервалы":
         selected_interval_sidebar = st.selectbox("Выберите период", tab_sidebar_list,
                                                  index=int(st.session_state.selection_interval),
                                                  key="intervals_select_box_sidebar", label_visibility="visible")
+
+        top_count = st.number_input(label="Количество датчиков, внесших максимальный вклад", min_value=1,
+                                    max_value=len(dict_kks), value=st.session_state.top, key="top_count")
+
+        st.session_state.top = top_count
+
         if selected_interval_sidebar == "Главная":
             with st.form("interval detection"):
                 st.write("Выделение интервалов")
 
                 roll_probability = st.number_input(label="Сглаживание в часах", min_value=1,
                                                    value=config["model"]["rolling"], key="roll_probability")
+
                 st.session_state.roll = roll_probability
 
                 short_col, long_col = st.columns(2)
                 with short_col:
-                    short_threshold = st.number_input(label="SHORT_THRESHOLD", min_value=1, max_value=100, value=96,
+                    short_threshold = st.number_input(label="SHORT_THRESHOLD", min_value=1, max_value=100, value=default_interval_config["SHORT_THRESHOLD"],
                                                       key="SHORT_THRESHOLD")
-                    len_short_anomaly = st.number_input(label="LEN_SHORT_ANOMALY", min_value=0, value=72,
+                    len_short_anomaly = st.number_input(label="LEN_SHORT_ANOMALY", min_value=0, value=default_interval_config["LEN_SHORT_ANOMALY"],
                                                         key="LEN_SHORT_ANOMALY")
-                    count_continue_short = st.number_input(label="COUNT_CONTINUE_SHORT", min_value=0, value=5,
+                    count_continue_short = st.number_input(label="COUNT_CONTINUE_SHORT", min_value=0, value=default_interval_config["COUNT_CONTINUE_SHORT"],
                                                            key="COUNT_CONTINUE_SHORT")
                 with long_col:
-                    long_threshold = st.number_input(label="LONG_THRESHOLD", min_value=1, max_value=100, value=86,
+                    long_threshold = st.number_input(label="LONG_THRESHOLD", min_value=1, max_value=100, value=default_interval_config["LONG_THRESHOLD"],
                                                      key="LONG_THRESHOLD")
-                    len_long_anomaly = st.number_input(label="LEN_LONG_ANOMALY", min_value=0, value=288,
+                    len_long_anomaly = st.number_input(label="LEN_LONG_ANOMALY", min_value=0, value=default_interval_config["LEN_LONG_ANOMALY"],
                                                        key="LEN_LONG_ANOMALY")
-                    count_continue_long = st.number_input(label="COUNT_CONTINUE_LONG", min_value=0, value=5,
+                    count_continue_long = st.number_input(label="COUNT_CONTINUE_LONG", min_value=0, value=default_interval_config["COUNT_CONTINUE_LONG"],
                                                           key="COUNT_CONTINUE_LONG")
                 submitted_interval_detection = st.form_submit_button("Запустить выделение интервалов")
                 if submitted_interval_detection:
@@ -505,7 +528,8 @@ if selected_menu == "Интервалы":
                                                                               long_threshold,
                                                                               len_long_anomaly,
                                                                               count_continue_long,
-                                                                              config)
+                                                                              config,
+                                                                              top_count)
                     st.experimental_rerun()
         report_sidebar_button = st.button("PDF", key="report_siderbar_button")
 
@@ -621,7 +645,7 @@ if selected_menu == "Интервалы":
                         if (datetime_up_time > datetime_down_time) and flag_between_time:
                             interval_begin_index = datetime_down_time_index
                             interval_end_index = datetime_up_time_index
-                            top_T = mean_index(loss_df[interval_begin_index:interval_end_index], group_sensors)
+                            top_T, measurement = mean_index(loss_df[interval_begin_index:interval_end_index], group_sensors, top_count=st.session_state.top)
                             logger.info(loss_df[interval_begin_index:interval_end_index])
                             dictionary = {
                                 "time": [str(datetime.datetime.strftime(datetime_down_time,
@@ -630,7 +654,8 @@ if selected_menu == "Интервалы":
                                                                         "%Y-%m-%d %H:%M:%S"))],
                                 "len": interval_end_index - interval_begin_index,
                                 "index": [interval_begin_index, interval_end_index],
-                                "top_sensors": top_T
+                                "top_sensors": top_T,
+                                "measurement": measurement
                             }
                             try:
                                 with open(added_intervals, 'r', encoding='utf8') as f:
@@ -810,8 +835,8 @@ if selected_menu == "Интервалы":
                         if (datetime_up_edit > datetime_down_edit) and flag_between_edit:
                             interval_begin_edit_index = datetime_down_edit_index
                             interval_end_edit_index = datetime_up_edit_index
-                            top_edit_T = mean_index(loss_df[interval_begin_edit_index:interval_end_edit_index],
-                                                    group_sensors)
+                            top_edit_T, measurement = mean_index(loss_df[interval_begin_edit_index:interval_end_edit_index],
+                                                                 group_sensors, top_count=st.session_state.top)
                             dictionary_edit = {
                                 "time": [str(datetime.datetime.strftime(datetime_down_edit,
                                                                         "%Y-%m-%d %H:%M:%S")),
@@ -819,7 +844,8 @@ if selected_menu == "Интервалы":
                                                                         "%Y-%m-%d %H:%M:%S"))],
                                 "len": interval_end_edit_index - interval_begin_edit_index,
                                 "index": [interval_begin_edit_index, interval_end_edit_index],
-                                "top_sensors": top_edit_T
+                                "top_sensors": top_edit_T,
+                                "measurement": measurement
                             }
 
                             try:
