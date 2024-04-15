@@ -53,8 +53,11 @@ if __name__ == '__main__':
                 intervals_json_path = f'{method}{os.sep}json_interval{os.sep}group_{group + 1}.json'
 
                 # Сглаживание
-                df_rolled = rolling_probability(df_predict, default_interval_config["rolling"],
-                                                default_interval_config["number_of_samples"])
+                if default_interval_config["rolling"] != 0:
+                    df_rolled = rolling_probability(df_predict, default_interval_config["rolling"],
+                                                    default_interval_config["number_of_samples"])
+                else:
+                    df_rolled = df_predict
 
                 # merge фрейма вероятности с slice csv по timestamp
                 logger.info("merge rolled_df with df_slices by timestamp")

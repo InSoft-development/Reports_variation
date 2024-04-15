@@ -141,7 +141,10 @@ def rebuilt_anomaly_interval_streamlit(checked_method,
             data_df = pd.read_csv(csv_data_name)
 
             # Сглаживание и сохранение результата
-            rolled_df = rolling_probability(anomaly_time_df, roll_probability, number_of_samples)
+            if roll_probability != 0:
+                rolled_df = rolling_probability(anomaly_time_df, roll_probability, number_of_samples)
+            else:
+                rolled_df = anomaly_time_df
 
             # merge фрейма вероятности с slice csv по timestamp
             if len(rolled_df) != len(data_df):

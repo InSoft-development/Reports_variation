@@ -493,7 +493,7 @@ if selected_menu == "Интервалы":
             with st.form("interval detection"):
                 st.write("Выделение интервалов")
 
-                roll_probability = st.number_input(label="Сглаживание в часах", min_value=1,
+                roll_probability = st.number_input(label="Сглаживание в часах", min_value=0,
                                                    value=config["model"]["rolling"], key="roll_probability")
 
                 st.session_state.roll = roll_probability
@@ -1059,11 +1059,11 @@ if selected_menu == "Настройки":
     st.write(selected_menu)
     left_col, right_col = st.columns(2)
     with left_col:
-        left_number_input = st.number_input(label="Ширина отступа в 5-ти минутках слева", min_value=10,
+        left_number_input = st.number_input(label="Ширина отступа в 5-ти минутках слева", min_value=1,
                                             max_value=50000, step=1,
                                             value=st.session_state.LEFT_SPACE, key="left_number_input")
     with right_col:
-        right_number_input = st.number_input(label="Ширина отступа в 5-ти минутках справа", min_value=10,
+        right_number_input = st.number_input(label="Ширина отступа в 5-ти минутках справа", min_value=1,
                                              max_value=50000, step=1,
                                              value=st.session_state.RIGHT_SPACE, key="right_number_input")
     st.session_state.LEFT_SPACE = left_number_input
